@@ -1,4 +1,7 @@
 {
+  "overrides": {
+    "postcss": "^8.5.10"
+  },
   "name": "upstairs-talent-pipeline",
   "version": "0.1.0",
   "private": true,
@@ -9,7 +12,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.2.9",
+    "@supabase/supabase-js": "^2.108.2",
+    "next": "^16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -20,6 +24,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "nodemon": "^3.1.14",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
