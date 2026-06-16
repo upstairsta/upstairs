@@ -6,7 +6,6 @@ import Link from 'next/link';
 import supabase from "./supabaseClient";
 
 export default function Navbar() {
-  console.log(supabase);
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
