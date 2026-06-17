@@ -111,7 +111,7 @@ export default function HomePage() {
       {/* BACKGROUND IMAGE */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/background.jpeg" 
+          src="/Background.jpeg" 
           alt="Portal background" 
           fill 
           className="object-cover" 
