@@ -121,6 +121,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-slate-900/70"></div>
       </div>
 
+
       {/* HERO CONTENT */}
       <div className="flex flex-col justify-center items-center text-center relative z-10 px-6 py-16 md:py-24 lg:px-32 flex-grow">
         
