@@ -7,14 +7,71 @@ import Footer from '../../ftcomponents/footer';
 
 export default function TalentRegistrationPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  // 1. UPDATED STATE: Now tracks all 10 assessment questions individually
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
     skillArea: '',
     experience: '',
-    assessment: '',
+    q1: '', q2: '', q3: '', q4: '', q5: '', 
+    q6: '', q7: '', q8: '', q9: '', q10: ''
   });
+
+  // 2. ASSESSMENT QUESTIONS DATA
+  const assessmentQuestions = [
+    { 
+      id: 'q1', category: 'Logical Reasoning', 
+      text: 'If all Bloops are Razzies and some Razzies are Lazzies, which of the following must be true?', 
+      options: ['A) All Bloops are Lazzies', 'B) Some Bloops are Lazzies', 'C) No Bloops are Lazzies', 'D) All Lazzies are Bloops'] 
+    },
+    { 
+      id: 'q2', category: 'Verbal Ability / Reading Comprehension', 
+      text: 'The word “ubiquitous” most nearly means:', 
+      options: ['A) Rare', 'B) Present everywhere', 'C) Temporary', 'D) Hidden'] 
+    },
+    { 
+      id: 'q3', category: 'Quantitative Aptitude', 
+      text: 'A company’s revenue increased by 20% in Year 1 and then decreased by 10% in Year 2. What is the net percentage change over the two years?', 
+      options: ['A) 8% increase', 'B) 10% increase', 'C) 8% decrease', 'D) No change'] 
+    },
+    { 
+      id: 'q4', category: 'Attention to Detail', 
+      text: 'How many differences are there between the two strings below?\nString 1: RECRUITMENT2026ASSESSMENT\nString 2: RECRUITM3NT2026ASSESSM3NT', 
+      options: ['A) 1', 'B) 2', 'C) 3', 'D) 4'] 
+    },
+    { 
+      id: 'q5', category: 'Numerical Reasoning', 
+      text: 'If a project requires 6 workers to complete it in 8 days, how many days will it take 4 workers to complete the same project (assuming same work rate)?', 
+      options: ['A) 10 days', 'B) 12 days', 'C) 14 days', 'D) 16 days'] 
+    },
+    { 
+      id: 'q6', category: 'Basic Technical / Digital Literacy', 
+      text: 'What does “SQL” stand for in database management?', 
+      options: ['A) Structured Query Language', 'B) Simple Query Logic', 'C) System Query Link', 'D) Sequential Query Language'] 
+    },
+    { 
+      id: 'q7', category: 'Situational Judgment', 
+      text: 'When you notice a potential error in a colleague’s report just before a client deadline, the best immediate action is to:', 
+      options: ['A) Ignore it to avoid conflict', 'B) Inform your colleague privately and suggest a quick fix', 'C) Send the report as is and blame the colleague later', 'D) Escalate directly to the manager without talking to your colleague'] 
+    },
+    { 
+      id: 'q8', category: 'Logical Reasoning (Pattern)', 
+      text: 'What comes next in the series? 2, 3, 5, 7, 11, 13, ?', 
+      options: ['A) 15', 'B) 16', 'C) 17', 'D) 19'] 
+    },
+    { 
+      id: 'q9', category: 'Verbal Reasoning (Synonyms/Antonyms)', 
+      text: 'Which word is the opposite of “mitigate”?', 
+      options: ['A) Alleviate', 'B) Exacerbate', 'C) Moderate', 'D) Diminish'] 
+    },
+    { 
+      id: 'q10', category: 'Data Interpretation (Basic)', 
+      text: 'A team completed 40% of a project in the first month and 30% in the second month. What percentage of the project remains?', 
+      options: ['A) 20%', 'B) 30%', 'C) 40%', 'D) 10%'] 
+    }
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -39,7 +96,7 @@ export default function TalentRegistrationPage() {
           priority 
         />
         {/* Dark overlay to ensure text readability */}
-        <div className="absolute inset-0 bg-slate-950/70"></div>
+        <div className="absolute inset-0 bg-slate-900/70"></div>
       </div>
 
       <Navbar />
@@ -52,9 +109,9 @@ export default function TalentRegistrationPage() {
         </p>
       </div>
 
-      {/* FORM SECTION - UPDATED TO PREMIUM FROSTED GLASS */}
+      {/* FORM SECTION */}
       <main className="relative z-10 flex-grow py-8 px-6 mb-20">
-        <div className="max-w-3xl mx-auto bg-slate-850/80 backdrop-blur-md shadow-2xl rounded-xl overflow-hidden border border-slate-700">
+        <div className="max-w-4xl mx-auto bg-slate-900/80 backdrop-blur-md shadow-2xl rounded-xl overflow-hidden border border-slate-700">
           
           {isSubmitted ? (
             <div className="p-12 text-center">
@@ -62,7 +119,7 @@ export default function TalentRegistrationPage() {
                 ✓
               </div>
               <h2 className="text-3xl font-bold text-white mb-3">Registration Successful!</h2>
-              <p className="text-slate-300 mb-8 text-lg">Thank you for applying. Our team will review your profile and get back to you shortly.</p>
+              <p className="text-slate-300 mb-8 text-lg">Thank you for applying. Our team will review your profile and assessment. We will get back to you shortly.</p>
               <button 
                 onClick={() => setIsSubmitted(false)}
                 className="text-[#00bcd4] font-semibold hover:text-white transition-colors hover:underline"
@@ -71,7 +128,7 @@ export default function TalentRegistrationPage() {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-8">
+            <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10">
               
               {/* 1. PERSONAL DETAILS */}
               <section>
@@ -164,25 +221,38 @@ export default function TalentRegistrationPage() {
                 </div>
               </section>
 
-              {/* 4. ASSESSMENT QUESTIONS */}
+              {/* 4. MULTIPLE CHOICE ASSESSMENT */}
               <section>
-                <h3 className="text-xl font-bold text-white border-b border-slate-600 pb-2 mb-5">4. Assessment</h3>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Why do you want to join the TalentForge network?</label>
-                  <p className="text-xs text-slate-400 mb-3">Please provide a brief answer (Max 150 words).</p>
-                  <textarea 
-                    name="assessment"
-                    rows={4}
-                    required
-                    onChange={handleChange}
-                    className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors"
-                    placeholder="I am passionate about..."
-                  ></textarea>
+                <h3 className="text-xl font-bold text-white border-b border-slate-600 pb-2 mb-5">4. Assessment Questions</h3>
+                <p className="text-sm text-slate-400 mb-6">Please answer the following 10 questions. All fields are required.</p>
+                
+                <div className="space-y-6">
+                  {assessmentQuestions.map((q, index) => (
+                    <div key={q.id} className="p-5 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                      <h4 className="text-[#00bcd4] font-semibold text-sm mb-2">Question {index + 1}: {q.category}</h4>
+                      <p className="text-slate-200 mb-4 whitespace-pre-line leading-relaxed">{q.text}</p>
+                      <div className="space-y-3">
+                        {q.options.map((option, i) => (
+                          <label key={i} className="flex items-start space-x-3 cursor-pointer group">
+                            <input 
+                              type="radio" 
+                              name={q.id} 
+                              value={option} 
+                              required
+                              onChange={handleChange}
+                              className="mt-1 w-4 h-4 text-[#00bcd4] bg-slate-900 border-slate-600 focus:ring-[#00bcd4] focus:ring-offset-slate-900"
+                            />
+                            <span className="text-sm text-slate-300 group-hover:text-white transition-colors">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
 
               {/* SUBMIT BUTTON */}
-              <div className="pt-6">
+              <div className="pt-6 border-t border-slate-700">
                 <button 
                   type="submit"
                   className="w-full bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold text-lg py-4 px-8 uppercase tracking-widest text-center transition-colors shadow-lg rounded-md"
