@@ -26,11 +26,11 @@ export default function Navbar() {
           <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="flex items-center">
               <Image 
-                src="/talentfox.jpeg" 
+                src="/logo.jpeg" 
                 alt="TalentForge Logo" 
                 width={180} 
                 height={60} 
-                className="object-contain h-16 w-auto rounded-md" 
+                className="object-contain h-12 w-auto rounded-md" 
                 priority
               />
             </Link>
