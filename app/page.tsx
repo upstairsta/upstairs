@@ -27,7 +27,7 @@ export default function HomePage() {
         
         {/* TITLE */}
         <div className="max-w-4xl">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight drop-shadow-md">
+          <h1 className="text-4xl md:text-3xl lg:text-4xl font-bold text-white mb-1 leading-tight drop-shadow-md">
             Upstairs [Talent Pipeline] Registration Portal
           </h1>
           <p className="text-base md:text-lg lg:text-xl text-gray-200 mb-0 drop-shadow-sm font-normal">
