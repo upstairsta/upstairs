@@ -56,7 +56,7 @@ export default function AdminDashboard() {
       {/* SIDEBAR NAVIGATION (Frosted Glass) */}
       <aside className="w-64 bg-slate-900/60 backdrop-blur-md flex flex-col shadow-2xl z-20 hidden md:flex border-r border-slate-700/50">
         <div className="p-6 border-b border-slate-700/50">
-          <h2 className="text-2xl font-bold text-[#00bcd4] drop-shadow-md">TalentForge</h2>
+          <h2 className="text-2xl font-bold text-[#00bcd4] drop-shadow-md">Upstairs [Talent Pipeline]</h2>
           <p className="text-xs text-slate-400 mt-1">Admin Dashboard V1</p>
         </div>
         <nav className="flex-1 p-4 space-y-2">

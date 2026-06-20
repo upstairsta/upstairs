@@ -13,7 +13,7 @@ export default function HowItWorksPage() {
           How It Works
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl">
-          Learn how TalentForge connects talent with employers through a simple, streamlined process.
+          Learn how Upstairs [Talent Pipeline] connects talent with employers through a simple, streamlined process.
         </p>
         
         {/* Add step-by-step explanation or visuals here */}

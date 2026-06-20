@@ -105,7 +105,7 @@ export default function TalentRegistrationPage() {
       <div className="relative z-10 text-white py-12 px-6 text-center mt-8">
         <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg text-[#00bcd4]">Talent Registration</h1>
         <p className="text-slate-200 max-w-2xl mx-auto text-lg drop-shadow-md">
-          Join the TalentForge network. Showcase your skills, upload your CV, and get matched with top employers.
+          Join the Upstairs [Talent Pipeline] network. Showcase your skills, upload your CV, and get matched with top employers.
         </p>
       </div>
 

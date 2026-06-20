@@ -11,7 +11,7 @@ export default function SuccessStoriesPage() {
           Success Stories
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl">
-          Read inspiring stories of talents and employers who achieved success through TalentForge.
+          Read inspiring stories of talents and employers who achieved success through Upstairs [Talent Pipeline].
         </p>
         
         {/* Add testimonials, quotes, or story cards here */}

@@ -55,7 +55,7 @@ export default function EmployerRegistrationPage() {
         {/* Using the Employer Green (#28ab65) for the header text */}
         <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg text-[#28ab65]">Employer Registration</h1>
         <p className="text-slate-200 max-w-2xl mx-auto text-lg drop-shadow-md">
-          Partner with TalentForge to find top-tier, pre-vetted professionals. Create your company profile and post your talent requests today.
+          Partner with Upstairs [Talent Pipeline] to find top-tier, pre-vetted professionals. Create your company profile and post your talent requests today.
         </p>
       </div>
 
@@ -69,7 +69,7 @@ export default function EmployerRegistrationPage() {
                 ✓
               </div>
               <h2 className="text-3xl font-bold text-white mb-3">Request Received!</h2>
-              <p className="text-slate-300 mb-8 text-lg">Thank you for partnering with TalentForge. Our recruitment team will review your candidate request and contact you shortly.</p>
+              <p className="text-slate-300 mb-8 text-lg">Thank you for partnering with Upstairs [Talent Pipeline]. Our recruitment team will review your candidate request and contact you shortly.</p>
               <button 
                 onClick={() => setIsSubmitted(false)}
                 className="text-[#28ab65] font-semibold hover:text-white transition-colors hover:underline"

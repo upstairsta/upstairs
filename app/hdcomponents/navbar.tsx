@@ -12,7 +12,7 @@ export default function Navbar() {
     { name: 'How It Works', path: '/how-it-works' },
     { name: 'Internship Tracks', path: '/internship-tracks' },
     { name: 'Partner Companies', path: '/partner-companies' },
-    { name: 'TalentForge Startups', path: '/talentforge-startups' },
+    { name: 'Upstairs [Talent Pipeline] Startups', path: '/upstairs-startups' },
     { name: 'Success Stories', path: '/success-stories' },
     { name: 'FAQ', path: '/faq' },
   ];
@@ -27,7 +27,7 @@ export default function Navbar() {
             <Link href="/" className="flex items-center">
               <Image 
                 src="/logo.jpeg" 
-                alt="TalentForge Logo" 
+                alt="Upstairs [Talent Pipeline] Logo" 
                 width={180} 
                 height={60} 
                 className="object-contain h-12 w-auto rounded-md" 

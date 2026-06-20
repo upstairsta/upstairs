@@ -11,7 +11,7 @@ export default function PartnerCompaniesPage() {
           Partner Companies
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl">
-          Discover the companies collaborating with TalentForge to provide internship opportunities and career growth.
+          Discover the companies collaborating with Upstairs [Talent Pipeline] to provide internship opportunities and career growth.
         </p>
         
         {/* Add logos or a grid of partner companies here */}

@@ -11,7 +11,7 @@ export default function ApplyPage() {
       {/* Page Content */}
       <main className="flex-grow flex flex-col items-center justify-center p-8 text-center">
         <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-          Apply to TalentForge
+          Apply to Upstairs [Talent Pipeline]
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl mb-8 mx-auto">
           Begin your journey by registering as a talent or employer. Choose the path that fits you best.

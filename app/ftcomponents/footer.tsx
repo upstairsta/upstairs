@@ -15,7 +15,7 @@ export default function Footer() {
             💬 WhatsApp: <a href="https://wa.me/2349031753700" className="hover:text-[#00bcd4] transition-colors duration-300">Chat with us</a>
           </p>
           <p className="text-sm text-slate-400">
-            ✉️ Email: <a href="mailto:info@talentforge.org" className="hover:text-[#00bcd4] transition-colors duration-300">info@talentforge.org</a>
+            ✉️ Email: <a href="mailto:info@Upstairs [Talent Pipeline].org" className="hover:text-[#00bcd4] transition-colors duration-300">info@Upstairs [Talent Pipeline].org</a>
           </p>
         </div>
         
@@ -27,7 +27,7 @@ export default function Footer() {
             <li><Link href="/how-it-works" className="hover:text-[#00bcd4] transition-colors duration-300">How It Works</Link></li>
             <li><Link href="/internship-tracks" className="hover:text-[#00bcd4] transition-colors duration-300">Internship Tracks</Link></li>
             <li><Link href="/partner-companies" className="hover:text-[#00bcd4] transition-colors duration-300">Partner Companies</Link></li>
-            <li><Link href="/talentforge-startups" className="hover:text-[#00bcd4] transition-colors duration-300">TalentForge Startups</Link></li>
+            <li><Link href="/upstairs-startups" className="hover:text-[#00bcd4] transition-colors duration-300">Upstairs [Talent Pipeline] Startups</Link></li>
             <li><Link href="/success-stories" className="hover:text-[#00bcd4] transition-colors duration-300">Success Stories</Link></li>
             <li><Link href="/faq" className="hover:text-[#00bcd4] transition-colors duration-300">FAQ</Link></li>
           </ul>
@@ -48,7 +48,7 @@ export default function Footer() {
 
       {/* COPYRIGHT */}
       <div className="max-w-6xl mx-auto text-center text-sm mt-16 pt-8 text-slate-500 border-t border-slate-800/50">
-        © {new Date().getFullYear()} TalentForge. All rights reserved.
+        © {new Date().getFullYear()} Upstairs [Talent Pipeline]. All rights reserved.
       </div>
     </footer>
   );

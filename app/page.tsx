@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from './hdcomponents/navbar'; // Adjust this path if your components folder is elsewhere
+import Navbar from './hdcomponents/navbar';
 
 export default function HomePage() {
   return (
@@ -28,7 +28,7 @@ export default function HomePage() {
         {/* TITLE */}
         <div className="max-w-4xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight drop-shadow-md">
-            TalentForge Registration Portal
+            Upstairs [Talent Pipeline] Registration Portal
           </h1>
           <p className="text-base md:text-lg lg:text-xl text-gray-200 mb-0 drop-shadow-sm font-normal">
             Empowering talent and employers through opportunity
@@ -91,7 +91,7 @@ export default function HomePage() {
             <h3 className="font-bold text-lg mb-4">Contact Us</h3>
             <p className="text-sm mb-2">📞 Phone: <a href="tel:+2349031753700" className="hover:text-[#008b9c] transition-colors">+234 903 175 3700</a></p>
             <p className="text-sm mb-2">💬 WhatsApp: <a href="https://wa.me/2349031753700" className="hover:text-[#008b9c] transition-colors">Chat with us</a></p>
-            <p className="text-sm">✉️ Email: info@talentforge.org</p>
+            <p className="text-sm">✉️ Email: info@Upstairs [Talent Pipeline].org</p>
           </div>
           
           <div>
@@ -101,7 +101,7 @@ export default function HomePage() {
               <li><Link href="/how-it-works" className="hover:text-[#008b9c] transition-colors">How It Works</Link></li>
               <li><Link href="/internship-tracks" className="hover:text-[#008b9c] transition-colors">Internship Tracks</Link></li>
               <li><Link href="/partner-companies" className="hover:text-[#008b9c] transition-colors">Partner Companies</Link></li>
-              <li><Link href="/talentforge-startups" className="hover:text-[#008b9c] transition-colors">TalentForge Startups</Link></li>
+              <li><Link href="/upstairs-startups" className="hover:text-[#008b9c] transition-colors">Upstairs [Talent Pipeline] Startups</Link></li>
               <li><Link href="/success-stories" className="hover:text-[#008b9c] transition-colors">Success Stories</Link></li>
               <li><Link href="/faq" className="hover:text-[#008b9c] transition-colors">FAQ</Link></li>
             </ul>
@@ -114,7 +114,7 @@ export default function HomePage() {
         </div>
 
         <div className="text-center text-xs mt-12 pt-8 text-gray-500 border-t border-slate-800">
-          © {new Date().getFullYear()} TalentForge. All rights reserved.
+          © {new Date().getFullYear()} Upstairs [Talent Pipeline]. All rights reserved.
         </div>
       </footer>
     </div>

@@ -14,7 +14,7 @@ export default function FAQPage() {
           Frequently Asked Questions
         </h1>
         <p className="text-lg text-slate-600">
-          Find answers to all your questions about the TalentForge portal right here.
+          Find answers to all your questions about the Upstairs [Talent Pipeline] portal right here.
         </p>
         
         {/* You would put your accordion or list of questions down here */}
