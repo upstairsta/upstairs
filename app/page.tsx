@@ -23,11 +23,11 @@ export default function HomePage() {
       </div>
 
       {/* HERO CONTENT */}
-      <div className="flex flex-col justify-center items-center text-center relative z-10 px-6 py-16 md:py-24 lg:px-32 flex-grow">
+      <div className="flex flex-col justify-center items-center text-center relative z-10 px-6 py-16 md:py-12 lg:px-32 flex-grow">
         
         {/* TITLE */}
         <div className="max-w-4xl">
-          <h1 className="text-4xl md:text-3xl lg:text-4xl font-bold text-white mb-1 leading-tight drop-shadow-md">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-1 leading-tight drop-shadow-md">
             Upstairs [Talent Pipeline] Registration Portal
           </h1>
           <p className="text-base md:text-lg lg:text-xl text-gray-200 mb-0 drop-shadow-sm font-normal">
@@ -35,7 +35,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-6 items-center justify-center mt-8 w-full max-w-2xl">
+        <div className="flex flex-col sm:flex-row gap-7 items-center justify-center mt-8 w-full max-w-2xl">
           <Link 
             href="/apply/talent" 
             className="bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold text-sm md:text-base py-4 px-8 uppercase tracking-widest text-center transition-colors shadow-lg rounded-md w-full sm:w-auto flex-1"
@@ -56,7 +56,7 @@ export default function HomePage() {
         <div className="flex flex-col items-center text-center space-y-8 max-w-lg mx-auto">
           
           {/* Learning Materials Portal */}
-          <div className="flex flex-col items-center space-y-4 w-full">
+          <div className="flex flex-col items-center space-y-1 w-full">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">
               Learning Materials Portal
             </h2>
@@ -69,7 +69,7 @@ export default function HomePage() {
           </div>
 
           {/* Internal Admin Portal */}
-          <div className="flex flex-col items-center space-y-4 w-full border-t border-gray-200 pt-6">
+          <div className="flex flex-col items-center space-y-1 w-full border-t border-gray-200 pt-6">
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">
               Internal Admin
             </h2>
@@ -91,7 +91,7 @@ export default function HomePage() {
             <h3 className="font-bold text-lg mb-4">Contact Us</h3>
             <p className="text-sm mb-2">📞 Phone: <a href="tel:+2349031753700" className="hover:text-[#008b9c] transition-colors">+234 903 175 3700</a></p>
             <p className="text-sm mb-2">💬 WhatsApp: <a href="https://wa.me/2349031753700" className="hover:text-[#008b9c] transition-colors">Chat with us</a></p>
-            <p className="text-sm">✉️ Email: info@Upstairs [Talent Pipeline].org</p>
+            <p className="text-sm">✉️ Email: info@upstairstalentpipelineafrica.com</p>
           </div>
           
           <div>
