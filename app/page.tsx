@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from './hdcomponents/navbar';
+import { supabase } from '@/utils/supabase';
 
 export default function HomePage() {
   return (
