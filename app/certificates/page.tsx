@@ -8,13 +8,13 @@ import { supabase } from '../../utils/supabase';
 
 interface CertificateRow {
   id: string;
-  recipient: text;
-  role: text;
-  duration: text;
-  project: text;
-  startup: text;
-  performance_level: text;
-  issue_date: text;
+  recipient: string;
+  role: string;
+  duration: string;
+  project: string;
+  startup: string;
+  performance_level: string;
+  issue_date: string;
 }
 
 export default function CertificationEnginePage() {
