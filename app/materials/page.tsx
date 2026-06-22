@@ -1,244 +1,293 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Navbar from '../hdcomponents/navbar'; // Adjust to ../../hdcomponents/navbar if deeper in folders
-import Footer from '../ftcomponents/footer';
+import Navbar from '../hdcomponents/navbar'; 
+import Footer from '../ftcomponents/footer'; 
+import { supabase } from '../../utils/supabase';
 
-// --- DUMMY DATA FOR THE PORTAL ---
-const DUMMY_VIDEOS = [
-  { id: 1, title: "Mastering React Hooks", duration: "12:45", category: "Software Engineering" },
-  { id: 2, title: "Figma Prototyping Basics", duration: "18:20", category: "Product Design" },
-  { id: 3, title: "SQL for Beginners", duration: "24:10", category: "Data Science" },
-  { id: 4, title: "Agile Project Management", duration: "15:30", category: "Management" },
-];
+interface Course {
+  id: number;
+  title: string;
+  description: string;
+  track: string;
+  icon: string;
+}
 
-const DUMMY_RESOURCES = [
-  { id: 101, title: "Frontend Interview Cheat Sheet", type: "PDF", price: 0, isFree: true },
-  { id: 102, title: "Advanced UI/UX Component Kit", type: "Figma File", price: 15, isFree: false },
-  { id: 103, title: "Full-Stack Developer Road Map", type: "PDF", price: 0, isFree: true },
-  { id: 104, title: "Data Structures & Algorithms Guide", type: "eBook", price: 25, isFree: false },
-];
+interface Lesson {
+  id: number;
+  course_id: number;
+  module_name: string;
+  title: string;
+  content: string;
+  video_url: string | null;
+  order_index: number;
+}
 
 export default function LearningPortalPage() {
-  const [activeTab, setActiveTab] = useState('videos');
-  
-  // Payment & Tracking State
-  const [purchasedItems, setPurchasedItems] = useState<number[]>([]);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [selectedResource, setSelectedResource] = useState<any>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [completedLessonIds, setCompletedLessonIds] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Trigger Checkout Modal
-  const handleBuyClick = (resource: any) => {
-    setSelectedResource(resource);
-    setPaymentModalOpen(true);
+  // Classroom Navigation State Viewscopes
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
+
+  // 1. LIFECYCLE SYNC: Core Data Pipeline Pull Hook
+  const loadPortalData = async () => {
+    try {
+      const [coursesRes, lessonsRes, progressRes] = await Promise.all([
+        supabase.from('courses').select('*'),
+        supabase.from('lessons').select('*').order('order_index', { ascending: true }),
+        supabase.from('learning_progress').select('lesson_id').eq('intern_name', 'Alex Johnson')
+      ]);
+
+      if (coursesRes.error) throw coursesRes.error;
+      if (lessonsRes.error) throw lessonsRes.error;
+      if (progressRes.error) throw progressRes.error;
+
+      setCourses(coursesRes.data || []);
+      setLessons(lessonsRes.data || []);
+      setCompletedLessonIds(progressRes.data?.map(p => p.lesson_id) || []);
+    } catch (err: any) {
+      alert(`Portal initialization failure: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Simulate Payment Processing
-  const confirmPayment = () => {
-    setIsProcessing(true);
-    
-    // Simulate a 1.5 second delay for communicating with bank/Stripe/Paystack
-    setTimeout(() => {
-      setPurchasedItems([...purchasedItems, selectedResource.id]);
-      setIsProcessing(false);
-      setPaymentModalOpen(false);
-      alert(`Payment Successful! ${selectedResource.title} is now in your Purchases.`);
-    }, 1500);
+  useEffect(() => {
+    loadPortalData();
+  }, []);
+
+  // 2. TOGGLE PROGRESS STATE MATRIX
+  const toggleLessonCompletion = async (lessonId: number) => {
+    const isCurrentlyDone = completedLessonIds.includes(lessonId);
+    try {
+      if (!isCurrentlyDone) {
+        // Insert record log entry
+        const { error } = await supabase
+          .from('learning_progress')
+          .insert([{ intern_name: 'Alex Johnson', lesson_id: lessonId }]);
+        if (error) throw error;
+        setCompletedLessonIds(prev => [...prev, lessonId]);
+      } else {
+        // Remove completion entry block
+        const { error } = await supabase
+          .from('learning_progress')
+          .delete()
+          .eq('intern_name', 'Alex Johnson')
+          .eq('lesson_id', lessonId);
+        if (error) throw error;
+        setCompletedLessonIds(prev => prev.filter(id => id !== lessonId));
+      }
+    } catch (err: any) {
+      alert(`Failed processing completion state: ${err.message}`);
+    }
   };
+
+  // Helper calculation vectors
+  const currentCourseLessons = lessons.filter(l => l.course_id === selectedCourse?.id);
+  const currentCourseDoneCount = currentCourseLessons.filter(l => completedLessonIds.includes(l.id)).length;
+  const progressionPercent = currentCourseLessons.length > 0 
+    ? Math.round((currentCourseDoneCount / currentCourseLessons.length) * 100) 
+    : 0;
 
   return (
     <div className="min-h-screen flex flex-col relative text-slate-200 font-sans">
       
       {/* BACKGROUND IMAGE & OVERLAY */}
       <div className="absolute inset-0 z-0 fixed">
-        <Image 
-          src="/backgrd.jpeg" 
-          alt="Portal background" 
-          fill 
-          className="object-cover" 
-          priority 
-        />
+        <Image src="/backg.jpeg" alt="Portal Background" fill className="object-cover" priority />
         <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]"></div>
       </div>
 
       <Navbar />
 
-      {/* HEADER SECTION */}
-      <div className="relative z-10 text-white py-12 px-6 text-center mt-8">
-        <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg text-[#00bcd4]">Learning Portal</h1>
-        <p className="text-slate-300 max-w-2xl mx-auto text-lg drop-shadow-md">
-          Upgrade your skills with our free video lessons, or purchase premium resources to fast-track your career.
-        </p>
-      </div>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="relative z-10 flex-grow py-8 px-6 mb-20 max-w-6xl mx-auto w-full">
+      {/* VIEWPORT CANVAS ROUTER CONTAINER */}
+      <main className="relative z-10 flex-grow max-w-7xl mx-auto w-full px-6 py-12 mb-20">
         
-        {/* TABS */}
-        <div className="flex flex-wrap justify-center gap-4 mb-10">
-          <button 
-            onClick={() => setActiveTab('videos')}
-            className={`px-6 py-3 rounded-lg font-bold transition-all ${activeTab === 'videos' ? 'bg-[#008b9c] text-white shadow-lg shadow-[#008b9c]/20' : 'bg-slate-900/60 text-slate-300 hover:bg-slate-800/80 border border-slate-700/50'}`}
-          >
-            ▶ Free Videos
-          </button>
-          <button 
-            onClick={() => setActiveTab('resources')}
-            className={`px-6 py-3 rounded-lg font-bold transition-all ${activeTab === 'resources' ? 'bg-[#008b9c] text-white shadow-lg shadow-[#008b9c]/20' : 'bg-slate-900/60 text-slate-300 hover:bg-slate-800/80 border border-slate-700/50'}`}
-          >
-            📚 Resource Library
-          </button>
-          <button 
-            onClick={() => setActiveTab('purchases')}
-            className={`px-6 py-3 rounded-lg font-bold transition-all ${activeTab === 'purchases' ? 'bg-[#008b9c] text-white shadow-lg shadow-[#008b9c]/20' : 'bg-slate-900/60 text-slate-300 hover:bg-slate-800/80 border border-slate-700/50'}`}
-          >
-            🎒 My Purchases ({purchasedItems.length})
-          </button>
-        </div>
-
-        {/* TAB 1: FREE VIDEOS */}
-        {activeTab === 'videos' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {DUMMY_VIDEOS.map((video) => (
-              <div key={video.id} className="bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-700/50 overflow-hidden group hover:border-[#00bcd4]/50 transition-colors">
-                {/* Simulated Video Thumbnail */}
-                <div className="h-40 bg-slate-800 flex items-center justify-center relative group-hover:bg-slate-700 transition-colors cursor-pointer">
-                  <div className="w-12 h-12 bg-[#00bcd4] rounded-full flex items-center justify-center pl-1 shadow-lg">
-                    <span className="text-white text-xl">▶</span>
-                  </div>
-                  <span className="absolute bottom-2 right-2 bg-black/70 text-xs px-2 py-1 rounded text-white font-mono">
-                    {video.duration}
-                  </span>
-                </div>
-                <div className="p-5">
-                  <p className="text-xs text-[#00bcd4] font-semibold mb-1 uppercase tracking-wider">{video.category}</p>
-                  <h3 className="font-bold text-white text-lg">{video.title}</h3>
-                </div>
-              </div>
-            ))}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32 space-y-3">
+            <span className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#00bcd4]"></span>
+            <p className="text-slate-400 text-sm">Synchronizing curriculum syllabi arrays...</p>
           </div>
-        )}
+        ) : !selectedCourse ? (
+          
+          /* ========================================================
+             VIEW 1: COURSE ACADEMY HUB MAIN DIRECTORY
+             ======================================================== */
+          <div>
+            <div className="mb-10 text-center max-w-2xl mx-auto mt-6">
+              <h1 className="text-3xl md:text-5xl font-black text-white mb-3 tracking-tight">Academic Learning Portal</h1>
+              <p className="text-slate-400">Unlock your tracks core framework lectures. Complete practical tasks to activate Workspace access loops.</p>
+            </div>
 
-        {/* TAB 2: RESOURCE LIBRARY */}
-        {activeTab === 'resources' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {DUMMY_RESOURCES.map((resource) => {
-              const isPurchased = purchasedItems.includes(resource.id);
-              
-              return (
-                <div key={resource.id} className="bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-700/50 p-6 flex flex-col h-full shadow-xl">
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="bg-slate-800 border border-slate-600 text-slate-300 text-xs px-3 py-1 rounded-full">
-                        {resource.type}
-                      </span>
-                      {resource.isFree ? (
-                        <span className="bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full">FREE</span>
-                      ) : (
-                        <span className="bg-[#00bcd4]/20 text-[#00bcd4] text-xs font-bold px-3 py-1 rounded-full border border-[#00bcd4]/30">PREMIUM</span>
-                      )}
-                    </div>
-                    <h3 className="font-bold text-white text-xl mb-2">{resource.title}</h3>
-                  </div>
-                  
-                  <div className="mt-6 pt-4 border-t border-slate-700/50">
-                    {resource.isFree || isPurchased ? (
-                      <button className="w-full bg-slate-800 hover:bg-slate-700 text-[#00bcd4] font-bold py-3 px-4 rounded-lg transition-colors border border-slate-600">
-                        ⬇ Download Now
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => handleBuyClick(resource)}
-                        className="w-full bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg flex justify-between items-center"
-                      >
-                        <span>Buy Now</span>
-                        <span>${resource.price}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              {courses.map((course) => {
+                const totalL = lessons.filter(l => l.course_id === course.id).length;
+                const doneL = lessons.filter(l => l.course_id === course.id && completedLessonIds.includes(l.id)).length;
+                const pct = totalL > 0 ? Math.round((doneL / totalL) * 100) : 0;
 
-        {/* TAB 3: MY PURCHASES */}
-        {activeTab === 'purchases' && (
-          <div className="bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-700/50 p-8 min-h-[40vh]">
-            <h2 className="text-2xl font-bold text-white mb-6 border-b border-slate-700/50 pb-4">Unlocked Resources</h2>
-            
-            {purchasedItems.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">
-                <p className="text-lg mb-4">You haven't purchased any premium resources yet.</p>
-                <button 
-                  onClick={() => setActiveTab('resources')}
-                  className="text-[#00bcd4] hover:underline"
-                >
-                  Browse the Resource Library
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {DUMMY_RESOURCES.filter(r => purchasedItems.includes(r.id)).map(resource => (
-                  <div key={resource.id} className="flex justify-between items-center bg-slate-800/50 p-4 rounded-lg border border-slate-600">
+                return (
+                  <div key={course.id} className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-xl p-6 flex flex-col justify-between shadow-xl hover:border-[#00bcd4]/40 transition-all group">
                     <div>
-                      <h4 className="font-bold text-white text-lg">{resource.title}</h4>
-                      <p className="text-sm text-slate-400">{resource.type}</p>
+                      <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-2xl border border-slate-700/60 mb-4 group-hover:bg-[#00bcd4]/10 transition-colors">
+                        {course.icon}
+                      </div>
+                      <span className="text-xs uppercase tracking-wider text-[#00bcd4] font-bold">{course.track}</span>
+                      <h3 className="text-xl font-bold text-white mt-1 mb-2">{course.title}</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed mb-6">{course.description}</p>
                     </div>
-                    <button className="bg-[#008b9c] hover:bg-[#009fb3] text-white px-6 py-2 rounded-lg font-bold transition-colors">
-                      Download
-                    </button>
+
+                    <div className="space-y-4">
+                      {/* Metric Tracker Bar */}
+                      <div>
+                        <div className="flex justify-between text-xs font-semibold mb-1 text-slate-400">
+                          <span>Progress Tracker</span>
+                          <span>{pct}% ({doneL}/{totalL})</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700/50">
+                          <div className="bg-[#00bcd4] h-2 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          const filtered = lessons.filter(l => l.course_id === course.id);
+                          if (filtered.length > 0) setActiveLesson(filtered[0]);
+                        }}
+                        className="w-full bg-slate-800 hover:bg-[#008b9c] border border-slate-700 hover:border-transparent font-bold text-sm py-3 rounded-lg transition-colors"
+                      >
+                        Enter Virtual Classroom →
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+        ) : (
+
+          /* ========================================================
+             VIEW 2: THE INTERACTIVE FULL-SCREEN CLASSROOM
+             ======================================================== */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* LEFT COLUMN: MODULE & LESSON SIDEBAR VIEW (4 cols) */}
+            <aside className="lg:col-span-4 bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-800 p-5 shadow-xl max-h-[78vh] flex flex-col">
+              <button 
+                onClick={() => { setSelectedCourse(null); setActiveLesson(null); loadPortalData(); }}
+                className="text-xs font-bold text-slate-400 hover:text-[#00bcd4] transition-colors mb-4 flex items-center gap-1"
+              >
+                ← Return to Academy Hub
+              </button>
+              
+              <div className="border-b border-slate-800 pb-3 mb-4">
+                <h2 className="font-black text-white text-lg line-clamp-1">{selectedCourse.title}</h2>
+                <div className="flex justify-between items-center text-xs text-slate-400 mt-2">
+                  <span>Course Syllabus Complete</span>
+                  <span className="text-[#00bcd4] font-bold">{progressionPercent}%</span>
+                </div>
+                <div className="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                  <div className="bg-[#00bcd4] h-1.5 rounded-full" style={{ width: `${progressionPercent}%` }}></div>
+                </div>
+              </div>
+
+              {/* Scrollable Lesson Feed Array */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                {Array.from(new Set(currentCourseLessons.map(l => l.module_name))).map((modName) => (
+                  <div key={modName} className="space-y-1.5">
+                    <h4 className="text-slate-500 font-bold text-xs uppercase tracking-wider pl-1">{modName}</h4>
+                    {currentCourseLessons.filter(l => l.module_name === modName).map((les) => {
+                      const isRead = completedLessonIds.includes(les.id);
+                      const isCurrent = activeLesson?.id === les.id;
+
+                      return (
+                        <button
+                          key={les.id}
+                          onClick={() => setActiveLesson(les)}
+                          className={`w-full text-left p-3 rounded-lg text-sm transition-all border flex items-center justify-between gap-3 ${
+                            isCurrent 
+                              ? 'bg-[#008b9c]/10 border-[#00bcd4] text-white font-semibold' 
+                              : 'bg-slate-800/30 border-transparent hover:bg-slate-800/60 text-slate-300'
+                          }`}
+                        >
+                          <span className="line-clamp-1">
+                            {isRead ? '✅' : '📄'} {les.title}
+                          </span>
+                          <span className="text-[10px] bg-slate-900 text-slate-400 font-mono px-1.5 py-0.5 rounded">
+                            L{les.order_index}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
-            )}
+            </aside>
+
+            {/* RIGHT COLUMN: CORE MEDIA PLAYER AND CONTENT (8 cols) */}
+            <section className="lg:col-span-8 bg-slate-900/40 backdrop-blur-md rounded-xl border border-slate-800 p-6 md:p-8 shadow-xl">
+              {activeLesson ? (
+                <div className="space-y-6">
+                  <div>
+                    <span className="text-xs font-bold text-[#00bcd4] uppercase tracking-wide">{activeLesson.module_name}</span>
+                    <h1 className="text-2xl md:text-3xl font-black text-white mt-0.5">{activeLesson.title}</h1>
+                  </div>
+
+                  {/* MEDIA EMBED COMPONENT PANEL */}
+                  {activeLesson.video_url && (
+                    <div className="w-full aspect-video rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative bg-black">
+                      <iframe 
+                        className="w-full h-full absolute inset-0"
+                        src={activeLesson.video_url}
+                        title={activeLesson.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  )}
+
+                  {/* LECTURE TEXT SYLLABUS PANEL */}
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                    <h3 className="text-sm font-bold tracking-wider text-slate-400 uppercase mb-3">Lecture Notes & Brief</h3>
+                    <p className="text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-line">
+                      {activeLesson.content}
+                    </p>
+                  </div>
+
+                  {/* ACTION CONTROLLER METRIC LAYER */}
+                  <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
+                    <span className="text-xs font-mono text-slate-500">Lecture Verification Segment ID: #{activeLesson.id}</span>
+                    <button
+                      onClick={() => toggleLessonCompletion(activeLesson.id)}
+                      className={`font-bold text-sm px-6 py-3 rounded-lg shadow-md transition-all flex items-center gap-2 ${
+                        completedLessonIds.includes(activeLesson.id)
+                          ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-600/10'
+                          : 'bg-[#008b9c] hover:bg-[#009fb3] text-white shadow-[#008b9c]/10'
+                      }`}
+                    >
+                      {completedLessonIds.includes(activeLesson.id) ? '✓ Completed (Uncheck)' : 'Mark Lecture Complete'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-20 text-slate-500 italic">
+                  Select an available timeline lesson unit from the sidebar navigation array.
+                </div>
+              )}
+            </section>
+
           </div>
         )}
+
       </main>
 
       <Footer />
-
-      {/* PAYMENT MODAL (Pop-up) */}
-      {paymentModalOpen && selectedResource && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !isProcessing && setPaymentModalOpen(false)}></div>
-          
-          <div className="relative bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md p-8 overflow-hidden">
-            <h3 className="text-2xl font-bold text-white mb-2">Checkout Details</h3>
-            <p className="text-slate-400 mb-6 pb-6 border-b border-slate-700">You are about to purchase premium material.</p>
-            
-            <div className="flex justify-between items-center mb-4 text-lg">
-              <span className="text-slate-300 font-medium">{selectedResource.title}</span>
-              <span className="text-white font-bold">${selectedResource.price}.00</span>
-            </div>
-            
-            <div className="bg-slate-800 rounded-lg p-4 mb-8 border border-slate-600 text-sm text-slate-400 flex items-start space-x-3">
-              <span>🔒</span>
-              <p>This is a secure, encrypted transaction. In a real environment, this would redirect to Paystack or Stripe.</p>
-            </div>
-
-            <div className="space-y-3">
-              <button 
-                onClick={confirmPayment}
-                disabled={isProcessing}
-                className="w-full bg-[#218c53] hover:bg-[#28ab65] text-white font-bold py-4 rounded-lg transition-colors flex justify-center items-center disabled:opacity-70 disabled:cursor-wait"
-              >
-                {isProcessing ? 'Processing Payment...' : `Pay $${selectedResource.price}.00`}
-              </button>
-              <button 
-                onClick={() => setPaymentModalOpen(false)}
-                disabled={isProcessing}
-                className="w-full bg-transparent hover:bg-slate-800 text-slate-300 font-medium py-3 rounded-lg transition-colors border border-slate-600 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

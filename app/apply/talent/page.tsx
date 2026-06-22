@@ -4,11 +4,14 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Navbar from '../../hdcomponents/navbar'; 
 import Footer from '../../ftcomponents/footer';
+import { supabase } from '../../../utils/supabase';
+
 
 export default function TalentRegistrationPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Tracks database execution state
+  const [resumeFile, setResumeFile] = useState<File | null>(null); // Tracks the raw CV file object
   
-  // 1. UPDATED STATE: Now tracks all 10 assessment questions individually
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -19,7 +22,6 @@ export default function TalentRegistrationPage() {
     q6: '', q7: '', q8: '', q9: '', q10: ''
   });
 
-  // 2. ASSESSMENT QUESTIONS DATA
   const assessmentQuestions = [
     { 
       id: 'q1', category: 'Logical Reasoning', 
@@ -77,10 +79,72 @@ export default function TalentRegistrationPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Capture the physical CV file when chosen
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setResumeFile(e.target.files[0]);
+    }
+  };
+
+  // PROCESS BACKEND INGESTION LOOP
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+
+    try {
+      let uploadedResumeUrl = "";
+
+      // PATH A: If a CV file is attached, upload it to storage bucket first
+      if (resumeFile) {
+        const fileExtension = resumeFile.name.split('.').pop();
+        const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
+        const filePath = `resumes/${uniqueFileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('resumes')
+          .upload(filePath, resumeFile);
+
+        if (uploadError) throw new Error(`CV upload failed: ${uploadError.message}`);
+
+        // Extract the permanent web link for the file
+        const { data: urlData } = supabase.storage
+          .from('resumes')
+          .getPublicUrl(filePath);
+
+        uploadedResumeUrl = urlData.publicUrl;
+      }
+
+      // PATH B: Inject structured JSON values directly into the PostgreSQL engine row
+      const { error: insertError } = await supabase
+        .from('talents')
+        .insert([
+          {
+            full_name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            skill_area: formData.skillArea,
+            years_experience: formData.experience,
+            resume_url: uploadedResumeUrl,
+            q1: formData.q1, q2: formData.q2, q3: formData.q3, q4: formData.q4, q5: formData.q5,
+            q6: formData.q6, q7: formData.q7, q8: formData.q8, q9: formData.q9, q10: formData.q10
+          }
+        ]);
+
+      if (insertError) throw insertError;
+
+      // Successful lifecycle termination
+      setIsSubmitted(true);
+      setFormData({
+        fullName: '', email: '', phone: '', skillArea: '', experience: '',
+        q1: '', q2: '', q3: '', q4: '', q5: '', q6: '', q7: '', q8: '', q9: '', q10: ''
+      });
+      setResumeFile(null);
+
+    } catch (err: any) {
+      alert(`Database Error: ${err.message || 'Something went wrong'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -95,7 +159,6 @@ export default function TalentRegistrationPage() {
           className="object-cover" 
           priority 
         />
-        {/* Dark overlay to ensure text readability */}
         <div className="absolute inset-0 bg-slate-900/70"></div>
       </div>
 
@@ -139,9 +202,11 @@ export default function TalentRegistrationPage() {
                     <input 
                       type="text" 
                       name="fullName"
+                      value={formData.fullName}
                       required
                       onChange={handleChange}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors disabled:opacity-50"
                       placeholder="John Doe"
                     />
                   </div>
@@ -150,9 +215,11 @@ export default function TalentRegistrationPage() {
                     <input 
                       type="email" 
                       name="email"
+                      value={formData.email}
                       required
                       onChange={handleChange}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors disabled:opacity-50"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -161,9 +228,11 @@ export default function TalentRegistrationPage() {
                     <input 
                       type="tel" 
                       name="phone"
+                      value={formData.phone}
                       required
                       onChange={handleChange}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors disabled:opacity-50"
                       placeholder="+234 ..."
                     />
                   </div>
@@ -178,9 +247,11 @@ export default function TalentRegistrationPage() {
                     <label className="block text-sm font-medium text-slate-300 mb-1">Primary Skill Area</label>
                     <select 
                       name="skillArea"
+                      value={formData.skillArea}
                       required
                       onChange={handleChange}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] transition-colors [&>option]:bg-slate-800"
+                      disabled={isSubmitting}
+                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] transition-colors [&>option]:bg-slate-800 disabled:opacity-50"
                     >
                       <option value="">Select a skill...</option>
                       <option value="Software Engineering">Software Engineering</option>
@@ -194,9 +265,11 @@ export default function TalentRegistrationPage() {
                     <label className="block text-sm font-medium text-slate-300 mb-1">Years of Experience</label>
                     <select 
                       name="experience"
+                      value={formData.experience}
                       required
                       onChange={handleChange}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] transition-colors [&>option]:bg-slate-800"
+                      disabled={isSubmitting}
+                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] transition-colors [&>option]:bg-slate-800 disabled:opacity-50"
                     >
                       <option value="">Select experience...</option>
                       <option value="Entry Level (0-1 years)">Entry Level (0-1 years)</option>
@@ -216,7 +289,9 @@ export default function TalentRegistrationPage() {
                     type="file" 
                     accept=".pdf,.doc,.docx"
                     required
-                    className="w-full border border-slate-600 rounded-md p-2 bg-slate-800/50 text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#008b9c] file:text-white hover:file:bg-[#009fb3] cursor-pointer transition-colors"
+                    onChange={handleFileChange}
+                    disabled={isSubmitting}
+                    className="w-full border border-slate-600 rounded-md p-2 bg-slate-800/50 text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#008b9c] file:text-white hover:file:bg-[#009fb3] cursor-pointer transition-colors disabled:opacity-50"
                   />
                 </div>
               </section>
@@ -238,9 +313,11 @@ export default function TalentRegistrationPage() {
                               type="radio" 
                               name={q.id} 
                               value={option} 
+                              checked={formData[q.id as keyof typeof formData] === option}
                               required
                               onChange={handleChange}
-                              className="mt-1 w-4 h-4 text-[#00bcd4] bg-slate-900 border-slate-600 focus:ring-[#00bcd4] focus:ring-offset-slate-900"
+                              disabled={isSubmitting}
+                              className="mt-1 w-4 h-4 text-[#00bcd4] bg-slate-900 border-slate-600 focus:ring-[#00bcd4] focus:ring-offset-slate-900 disabled:opacity-50"
                             />
                             <span className="text-sm text-slate-300 group-hover:text-white transition-colors">{option}</span>
                           </label>
@@ -255,9 +332,10 @@ export default function TalentRegistrationPage() {
               <div className="pt-6 border-t border-slate-700">
                 <button 
                   type="submit"
-                  className="w-full bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold text-lg py-4 px-8 uppercase tracking-widest text-center transition-colors shadow-lg rounded-md"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold text-lg py-4 px-8 uppercase tracking-widest text-center transition-colors shadow-lg rounded-md disabled:opacity-50 disabled:cursor-wait"
                 >
-                  Submit Registration
+                  {isSubmitting ? 'Uploading & Processing...' : 'Submit Registration'}
                 </button>
               </div>
 
