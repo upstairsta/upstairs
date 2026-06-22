@@ -30,7 +30,7 @@ export default function LearningPortalPage() {
   const [completedLessonIds, setCompletedLessonIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Classrom Navigation State Viewscopes
+  // Classroom Navigation State Viewscopes
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
 
