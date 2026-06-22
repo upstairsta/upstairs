@@ -230,7 +230,7 @@ export default function LearningPortalPage() {
               </div>
             </aside>
 
-            {/* RIGHT COLUMN: CORE MEDIA PLAYER AND CONTENT (8 cols) */}
+            {/* RIGHT COLUMN: CORE MEDIA PLAYER $ CONTENT (8 cols) */}
             <section className="lg:col-span-8 bg-slate-900/40 backdrop-blur-md rounded-xl border border-slate-800 p-6 md:p-8 shadow-xl">
               {activeLesson ? (
                 <div className="space-y-6">
