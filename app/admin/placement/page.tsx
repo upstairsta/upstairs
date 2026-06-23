@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Navbar from '../hdcomponents/navbar'; // Adjust path if needed
-import Footer from '../ftcomponents/footer'; 
+import Navbar from '../../hdcomponents/navbar'; // Adjust path if needed
+import Footer from '../../ftcomponents/footer'; 
 
 // --- INITIAL DUMMY COHORT DATA ---
 const INITIAL_CANDIDATES = [

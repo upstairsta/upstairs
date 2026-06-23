@@ -15,7 +15,7 @@ export default function Footer() {
             💬 WhatsApp: <a href="https://wa.me/2349031753700" className="hover:text-[#00bcd4] transition-colors duration-300">Chat with us</a>
           </p>
           <p className="text-sm text-slate-400">
-            ✉️ Email: <a href="mailto:info@Upstairs [Talent Pipeline].org" className="hover:text-[#00bcd4] transition-colors duration-300">info@Upstairs [Talent Pipeline].org</a>
+            ✉️ Email: <a href="mailto:info@upstairstalentpipelineafrica.com" className="hover:text-[#00bcd4] transition-colors duration-300">info@upstairstalentpipelineafrica.com</a>
           </p>
         </div>
         

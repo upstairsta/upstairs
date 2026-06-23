@@ -1,38 +1,67 @@
+"use client";
+
+import Image from 'next/image';
 import Navbar from '../hdcomponents/navbar';
 import Footer from '../ftcomponents/footer';
 
 export default function ApplyPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col relative text-slate-200 font-sans">
       
+      {/* BACKGROUND IMAGE & OVERLAY */}
+      <div className="absolute inset-0 z-0 fixed">
+        <Image 
+          src="/backg.jpeg" 
+          alt="Application Gateway background" 
+          fill 
+          className="object-cover" 
+          priority 
+        />
+        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]"></div>
+      </div>
+
       {/* Navbar */}
       <Navbar />
 
-      {/* Page Content */}
-      <main className="flex-grow flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-          Apply to Upstairs [Talent Pipeline]
-        </h1>
-        <p className="text-lg text-slate-600 max-w-2xl mb-8 mx-auto">
-          Begin your journey by registering as a talent or employer. Choose the path that fits you best.
-        </p>
+      {/* PAGE CONTENT CONTAINER */}
+      <main className="relative z-10 flex-grow flex flex-col items-center justify-center p-6 text-center max-w-4xl mx-auto w-full mb-20 mt-12 animate-fadeIn">
+        
+        {/* PREMIUM CENTRAL GATEWAY CARD PANEL */}
+        <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-xl p-8 md:p-12 shadow-2xl w-full">
+          
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#00bcd4] bg-[#00bcd4]/10 px-4 py-1.5 rounded-full border border-[#00bcd4]/20">
+            
+          </span>
 
-        {/* Registration Buttons */}
-        <div className="flex flex-col sm:flex-row gap-6 items-center justify-center">
-          <a 
-            href="/apply/talent" 
-            className="bg-[#008b9c] hover:bg-[#009fb3] text-white font-semibold text-sm md:text-base py-3 px-8 uppercase tracking-wide text-center transition-colors shadow-lg rounded-md w-full sm:w-auto"
-          >
-            Talent Registration
-          </a>
+          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight mt-6 mb-4 drop-shadow-lg">
+            Apply to Upstairs <span className="text-[#00bcd4]">[Talent Pipeline]</span>
+          </h1>
+          
+          <p className="text-sm md:text-base text-slate-400 max-w-xl mb-10 mx-auto leading-relaxed">
+            Begin your journey by registering as a track candidate or secure corporate pipeline allocation resources. Choose the path that fits you best.
+          </p>
 
-          <a 
-            href="/apply/employer" 
-            className="bg-[#218c53] hover:bg-[#28ab65] text-white font-semibold text-sm md:text-base py-3 px-8 uppercase tracking-wide text-center transition-colors shadow-lg rounded-md w-full sm:w-auto"
-          >
-            Employer Registration
-          </a>
+          {/* REGISTRATION ACTION BUTTONS */}
+          <div className="flex flex-col sm:flex-row gap-6 items-center justify-center mt-8 w-full max-w-1xl">
+            
+            <a 
+              href="/apply/talent" 
+              className="w-full bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold text-sm uppercase tracking-wider py-4 px-8 text-center transition-all shadow-lg shadow-cyan-500/10 rounded-lg hover:-translate-y-0.5 duration-150"
+            >
+              🚀 Talent Registration
+            </a>
+
+            <a 
+              href="/apply/employer" 
+              className="w-full bg-[#218c53] hover:bg-[#28ab65] text-white font-bold text-sm uppercase tracking-wider py-4 px-8 text-center transition-all shadow-lg shadow-green-500/10 rounded-lg hover:-translate-y-0.5 duration-150"
+            >
+              🏢 Employer Registration
+            </a>
+            
+          </div>
+          
         </div>
+        
       </main>
 
       {/* Footer */}
