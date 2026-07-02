@@ -18,11 +18,11 @@ export default function HomePage() {
         <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-luminosity">
           <Image 
             src="/backgd.jpeg" 
-            alt="Hero Network Background" 
+            alt="Portal Background"
             fill 
             sizes="100vw"
             className="object-cover object-center" 
-            priority 
+            priority // <--- Add this flag right here
           />
         </div>
         
