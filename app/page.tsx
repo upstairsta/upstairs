@@ -17,7 +17,7 @@ export default function HomePage() {
         {/* HERO BACKGROUND IMAGE GRAPHIC */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-luminosity">
           <Image 
-            src="/Backgd.jpeg" 
+            src="/backgd.jpeg" 
             alt="Hero Network Background" 
             fill 
             sizes="100vw"
