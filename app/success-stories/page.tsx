@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '../hdcomponents/navbar'; 
-import Footer from '../ftcomponents/footer'; 
 
 const STORIES = [
   {
@@ -37,65 +36,78 @@ const STORIES = [
 
 export default function SuccessStoriesPage() {
   return (
-    <div className="min-h-screen flex flex-col relative text-slate-200 font-sans">
+    <div className="min-h-screen flex flex-col relative text-slate-700 font-sans bg-[#f4f7fa]">
       
-      {/* BACKGROUND IMAGE & OVERLAY */}
-      <div className="absolute inset-0 z-0 fixed">
-        <Image src="/backg.jpeg" alt="Background" fill className="object-cover" priority />
-        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]"></div>
-      </div>
-
+      {/* NAVBAR */}
       <Navbar />
 
-      {/* HEADER SECTION */}
-      <div className="relative z-10 text-white py-16 px-6 text-center mt-8">
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#00bcd4] bg-[#00bcd4]/10 px-4 py-1.5 rounded-full border border-[#00bcd4]/20">
+      {/* TOP DEEP NAVY HERO BANNER SECTION */}
+      <div className="relative bg-[#0b1528] text-white pt-24 pb-24 px-4 text-center overflow-hidden">
+        
+        {/* HERO BACKGROUND IMAGE GRAPHIC */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-luminosity">
+          <Image 
+            src="/backg.jpeg" 
+            alt="Alumni Network Background" 
+            fill 
+            sizes="100vw"
+            className="object-cover" 
+            priority 
+          />
+        </div>
+
+        {/* Soft background glow decorations */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none z-10"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none z-10"></div>
+
+        {/* Header Content Context */}
+        <div className="max-w-4xl mx-auto relative z-20 space-y-4">
           
-        </span>
-        <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight mt-4 drop-shadow-lg">
-          Alumni Success Stories
-        </h1>
-        <p className="text-slate-400 max-w-2xl mx-auto text-base md:text-lg drop-shadow-md">
-          Discover how our graduates made the leap from intermediate developers to foundational engineering assets inside global technology startups.
-        </p>
+          <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight">
+            Alumni Success Stories
+          </h1>
+          <p className="text-xs md:text-sm text-slate-300 max-w-xl mx-auto font-normal leading-relaxed opacity-90">
+            Discover how our graduates made the leap from intermediate developers to foundational engineering assets inside global technology startups.
+          </p>
+        </div>
       </div>
 
-      {/* STORIES MATRIX GRID */}
-      <main className="relative z-10 flex-grow py-4 px-6 mb-20 max-w-6xl mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* STORIES MATRIX WHITE CARD GRID */}
+      <main className="relative z-10 flex-grow py-14 px-6 mb-20 max-w-6xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {STORIES.map((story, index) => (
             <div 
               key={index} 
-              className="bg-slate-900/60 backdrop-blur-md border border-slate-800 p-6 rounded-xl shadow-2xl flex flex-col justify-between hover:border-[#00bcd4]/30 transition-all group relative"
+              className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:border-[#008b9c]/30 hover:shadow-md transition-all duration-300 flex flex-col justify-between group relative overflow-hidden"
             >
               <div>
                 {/* Header Profile Info Block */}
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-slate-800 rounded-full border border-slate-700 flex items-center justify-center text-2xl shadow-inner">
+                <div className="flex items-center gap-3.5 mb-5">
+                  <div className="w-11 h-11 bg-slate-50 rounded-full border border-slate-200 flex items-center justify-center text-xl shadow-sm shrink-0">
                     {story.avatar}
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-lg leading-tight">{story.name}</h3>
-                    <p className="text-xs text-[#00bcd4] font-semibold mt-0.5">{story.role} @ {story.company}</p>
+                    <h3 className="font-extrabold text-[#0d2347] text-base leading-tight">{story.name}</h3>
+                    <p className="text-[11px] text-[#008b9c] font-black uppercase mt-0.5 tracking-wide">{story.role} @ {story.company}</p>
                   </div>
                 </div>
 
                 {/* Training Track Badge Tag */}
                 <div className="mb-4">
-                  <span className="text-[10px] uppercase font-bold tracking-wider bg-slate-800 text-slate-400 px-2.5 py-1 rounded border border-slate-700/60">
+                  <span className="text-[10px] uppercase font-black tracking-wider bg-[#f4f7fa] text-slate-500 px-2.5 py-1 rounded-lg border border-slate-200">
                     Track: {story.track}
                   </span>
                 </div>
 
                 {/* Testimonial Blockquote */}
-                <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-slate-700 pl-3 py-1 mb-6">
+                <p className="text-slate-500 text-xs md:text-sm leading-relaxed italic border-l-2 border-slate-200 pl-3 py-1 mb-6 font-medium">
                   "{story.quote}"
                 </p>
               </div>
 
-              {/* Verified Output Outcome Tag */}
-              <div className="bg-[#218c53]/10 border border-[#218c53]/20 rounded-lg p-3 text-center mt-4">
-                <span className="text-xs font-bold text-green-400 tracking-wide">
+              {/* Verified Output Outcome Tag - Color Mapped to Emerald Theme Spec */}
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center mt-2 shadow-inner">
+                <span className="text-[11px] font-black text-emerald-600 uppercase tracking-wider flex items-center justify-center gap-1">
                   🎯 Verified Outcome: {story.outcome}
                 </span>
               </div>
@@ -103,19 +115,23 @@ export default function SuccessStoriesPage() {
           ))}
         </div>
 
-        {/* BOTTOM CALL TO ACTION LINK CARD */}
-        <div className="mt-16 text-center bg-slate-900/50 backdrop-blur-md border border-slate-800 max-w-3xl mx-auto p-8 rounded-xl shadow-xl">
-          <h2 className="text-xl font-bold text-white mb-2">Ready to engineer your own career breakthrough?</h2>
-          <p className="text-slate-400 text-sm mb-6 max-w-xl mx-auto">
+        {/* BOTTOM CALL TO ACTION MODULE - RECONFIGURED TO WHITE SECTION CARD */}
+        <div className="mt-16 text-center bg-white border border-slate-200 max-w-3xl mx-auto p-6 md:p-8 rounded-2xl shadow-sm space-y-4">
+          <h2 className="text-base md:text-lg font-black text-[#0d2347]">Ready to engineer your own career breakthrough?</h2>
+          <p className="text-slate-500 text-xs md:text-sm max-w-xl mx-auto leading-relaxed">
             Applications for the 2026 Incubation Clusters are currently processing. Secure your tracking validation review window today.
           </p>
-          <Link href="/apply/talent" className="inline-block bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold text-sm px-6 py-3.5 rounded-lg transition-colors">
-            Start Your Application Route
-          </Link>
+          <div className="pt-2">
+            <Link 
+              href="/apply/talent" 
+              className="inline-block bg-[#008b9c] hover:bg-[#007685] text-white font-bold text-xs uppercase tracking-wider px-8 py-3.5 rounded-xl transition-all shadow-sm whitespace-nowrap active:scale-98"
+            >
+              Start Your Application Route
+            </Link>
+          </div>
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

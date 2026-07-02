@@ -2,19 +2,19 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import Navbar from '../../hdcomponents/navbar'; 
-import Footer from '../../ftcomponents/footer';
 import { supabase } from '../../../utils/supabase';
-
 
 export default function TalentRegistrationPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Tracks database execution state
-  const [resumeFile, setResumeFile] = useState<File | null>(null); // Tracks the raw CV file object
+  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [resumeFile, setResumeFile] = useState<File | null>(null); 
   
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    password: '', // Added password track field
     phone: '',
     skillArea: '',
     experience: '',
@@ -79,25 +79,38 @@ export default function TalentRegistrationPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Capture the physical CV file when chosen
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setResumeFile(e.target.files[0]);
     }
   };
 
-  // PROCESS BACKEND INGESTION LOOP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      // 1. STEP ONE: Create the Auth Account inside Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email.trim(),
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+            user_role: 'talent'
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData?.user) throw new Error("Could not initialize your talent user profile session.");
+
+      // 2. STEP TWO: Handle CV Upload using the generated User ID to avoid directory collision
       let uploadedResumeUrl = "";
 
-      // PATH A: If a CV file is attached, upload it to storage bucket first
       if (resumeFile) {
         const fileExtension = resumeFile.name.split('.').pop();
-        const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
+        const uniqueFileName = `${authData.user.id}-${Date.now()}.${fileExtension}`;
         const filePath = `resumes/${uniqueFileName}`;
 
         const { error: uploadError } = await supabase.storage
@@ -106,7 +119,6 @@ export default function TalentRegistrationPage() {
 
         if (uploadError) throw new Error(`CV upload failed: ${uploadError.message}`);
 
-        // Extract the permanent web link for the file
         const { data: urlData } = supabase.storage
           .from('resumes')
           .getPublicUrl(filePath);
@@ -114,13 +126,14 @@ export default function TalentRegistrationPage() {
         uploadedResumeUrl = urlData.publicUrl;
       }
 
-      // PATH B: Inject structured JSON values directly into the PostgreSQL engine row
+      // 3. STEP THREE: Insert profile data mapped to the Auth User ID
       const { error: insertError } = await supabase
         .from('talents')
         .insert([
           {
+            id: authData.user.id, // Linking public profile table to auth database entry
             full_name: formData.fullName,
-            email: formData.email,
+            email: formData.email.trim(),
             phone: formData.phone,
             skill_area: formData.skillArea,
             years_experience: formData.experience,
@@ -132,219 +145,256 @@ export default function TalentRegistrationPage() {
 
       if (insertError) throw insertError;
 
-      // Successful lifecycle termination
       setIsSubmitted(true);
       setFormData({
-        fullName: '', email: '', phone: '', skillArea: '', experience: '',
+        fullName: '', email: '', password: '', phone: '', skillArea: '', experience: '',
         q1: '', q2: '', q3: '', q4: '', q5: '', q6: '', q7: '', q8: '', q9: '', q10: ''
       });
       setResumeFile(null);
 
     } catch (err: any) {
-      alert(`Database Error: ${err.message || 'Something went wrong'}`);
+      alert(`Registration Framework Failed: ${err.message || 'Something went wrong'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col font-sans bg-[#f8fafc]">
       
-      {/* BACKGROUND IMAGE & OVERLAY */}
-      <div className="absolute inset-0 z-0 fixed">
-        <Image 
-          src="/backg.jpeg" 
-          alt="Portal background" 
-          fill 
-          className="object-cover" 
-          priority 
-        />
-        <div className="absolute inset-0 bg-slate-900/70"></div>
+      {/* 1. HERO INTRO SECTION (DARK THEME - UNCHANGED) */}
+      <div className="relative bg-[#0b1528] text-white overflow-hidden pb-18">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-99 mix-blend-luminosity">
+          <Image 
+            src="/backg.jpeg" 
+            alt="Portal background" 
+            fill 
+            className="object-cover object-center opacity-35" 
+            priority 
+          />
+          <div className="absolute inset-0 bg-[#0f172a]/40 backdrop-blur-[1px]"></div>
+        </div>
+
+        <div className="relative z-10">
+          <Navbar />
+
+          <div className="max-w-5xl mx-auto px-6 text-center mt-20 md:mt-28 animate-fadeIn">
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">
+              Talent Registration
+            </h1>
+            <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
+              Join the Upstairs [Talent Pipeline] network. Showcase your skills, upload your CV, and get matched with top employers.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <Navbar />
-
-      {/* HEADER SECTION */}
-      <div className="relative z-10 text-white py-12 px-6 text-center mt-8">
-        <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg text-[#00bcd4]">Talent Registration</h1>
-        <p className="text-slate-200 max-w-2xl mx-auto text-lg drop-shadow-md">
-          Join the Upstairs [Talent Pipeline] network. Showcase your skills, upload your CV, and get matched with top employers.
-        </p>
-      </div>
-
-      {/* FORM SECTION */}
-      <main className="relative z-10 flex-grow py-8 px-6 mb-20">
-        <div className="max-w-4xl mx-auto bg-slate-900/80 backdrop-blur-md shadow-2xl rounded-xl overflow-hidden border border-slate-700">
+      {/* 2. FORM WORKSPACE CONTAINER (LIGHT BACKGROUND AS ORIGINAL) */}
+      <div className="flex-grow bg-[#f8fafc] z-10 -mt-12 rounded-t-3xl md:rounded-t-[2.5rem] border-t border-slate-200/50 shadow-[0_-15px_30px_rgba(0,0,0,0.03)]">
+        <main className="max-w-4xl mx-auto px-6 pb-24 pt-4 w-full">
           
-          {isSubmitted ? (
-            <div className="p-12 text-center">
-              <div className="w-20 h-20 bg-[#218c53] text-white rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-lg shadow-[#218c53]/30">
-                ✓
-              </div>
-              <h2 className="text-3xl font-bold text-white mb-3">Registration Successful!</h2>
-              <p className="text-slate-300 mb-8 text-lg">Thank you for applying. Our team will review your profile and assessment. We will get back to you shortly.</p>
-              <button 
-                onClick={() => setIsSubmitted(false)}
-                className="text-[#00bcd4] font-semibold hover:text-white transition-colors hover:underline"
-              >
-                Submit another application
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-10">
-              
-              {/* 1. PERSONAL DETAILS */}
-              <section>
-                <h3 className="text-xl font-bold text-white border-b border-slate-600 pb-2 mb-5">1. Personal Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="col-span-1 md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      name="fullName"
-                      value={formData.fullName}
-                      required
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors disabled:opacity-50"
-                      placeholder="John Doe"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
-                    <input 
-                      type="email" 
-                      name="email"
-                      value={formData.email}
-                      required
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors disabled:opacity-50"
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Phone Number</label>
-                    <input 
-                      type="tel" 
-                      name="phone"
-                      value={formData.phone}
-                      required
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] placeholder-slate-500 transition-colors disabled:opacity-50"
-                      placeholder="+234 ..."
-                    />
-                  </div>
+          {/* THE FORM CONTAINER CARD (NOW SOFT-DARK THEME) */}
+          <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden mt-6">
+            
+            {isSubmitted ? (
+              <div className="p-12 text-center animate-fadeIn">
+                <div className="w-16 h-16 bg-[#218c53] text-white rounded-full flex items-center justify-center text-2xl mx-auto mb-6 shadow-lg shadow-[#218c53]/20">
+                  ✓
                 </div>
-              </section>
-
-              {/* 2. SKILL AREA & EXPERIENCE */}
-              <section>
-                <h3 className="text-xl font-bold text-white border-b border-slate-600 pb-2 mb-5">2. Professional Profile</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Primary Skill Area</label>
-                    <select 
-                      name="skillArea"
-                      value={formData.skillArea}
-                      required
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] transition-colors [&>option]:bg-slate-800 disabled:opacity-50"
-                    >
-                      <option value="">Select a skill...</option>
-                      <option value="Software Engineering">Software Engineering</option>
-                      <option value="Data Science">Data Science</option>
-                      <option value="Product Design (UI/UX)">Product Design (UI/UX)</option>
-                      <option value="Digital Marketing">Digital Marketing</option>
-                      <option value="Project Management">Project Management</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Years of Experience</label>
-                    <select 
-                      name="experience"
-                      value={formData.experience}
-                      required
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                      className="w-full bg-slate-800/50 border border-slate-600 text-white rounded-md p-3 focus:outline-none focus:border-[#00bcd4] focus:ring-1 focus:ring-[#00bcd4] transition-colors [&>option]:bg-slate-800 disabled:opacity-50"
-                    >
-                      <option value="">Select experience...</option>
-                      <option value="Entry Level (0-1 years)">Entry Level (0-1 years)</option>
-                      <option value="Mid Level (2-4 years)">Mid Level (2-4 years)</option>
-                      <option value="Senior Level (5+ years)">Senior Level (5+ years)</option>
-                    </select>
-                  </div>
-                </div>
-              </section>
-
-              {/* 3. CV UPLOAD */}
-              <section>
-                <h3 className="text-xl font-bold text-white border-b border-slate-600 pb-2 mb-5">3. Resume / CV</h3>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Upload your CV (PDF or DOCX)</label>
-                  <input 
-                    type="file" 
-                    accept=".pdf,.doc,.docx"
-                    required
-                    onChange={handleFileChange}
-                    disabled={isSubmitting}
-                    className="w-full border border-slate-600 rounded-md p-2 bg-slate-800/50 text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#008b9c] file:text-white hover:file:bg-[#009fb3] cursor-pointer transition-colors disabled:opacity-50"
-                  />
-                </div>
-              </section>
-
-              {/* 4. MULTIPLE CHOICE ASSESSMENT */}
-              <section>
-                <h3 className="text-xl font-bold text-white border-b border-slate-600 pb-2 mb-5">4. Assessment Questions</h3>
-                <p className="text-sm text-slate-400 mb-6">Please answer the following 10 questions. All fields are required.</p>
-                
-                <div className="space-y-6">
-                  {assessmentQuestions.map((q, index) => (
-                    <div key={q.id} className="p-5 bg-slate-800/30 rounded-lg border border-slate-700/50">
-                      <h4 className="text-[#00bcd4] font-semibold text-sm mb-2">Question {index + 1}: {q.category}</h4>
-                      <p className="text-slate-200 mb-4 whitespace-pre-line leading-relaxed">{q.text}</p>
-                      <div className="space-y-3">
-                        {q.options.map((option, i) => (
-                          <label key={i} className="flex items-start space-x-3 cursor-pointer group">
-                            <input 
-                              type="radio" 
-                              name={q.id} 
-                              value={option} 
-                              checked={formData[q.id as keyof typeof formData] === option}
-                              required
-                              onChange={handleChange}
-                              disabled={isSubmitting}
-                              className="mt-1 w-4 h-4 text-[#00bcd4] bg-slate-900 border-slate-600 focus:ring-[#00bcd4] focus:ring-offset-slate-900 disabled:opacity-50"
-                            />
-                            <span className="text-sm text-slate-300 group-hover:text-white transition-colors">{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* SUBMIT BUTTON */}
-              <div className="pt-6 border-t border-slate-700">
+                <h2 className="text-2xl font-bold text-white mb-3">Registration Successful!</h2>
+                <p className="text-slate-400 mb-8 max-w-xl mx-auto text-sm leading-relaxed">
+                  Thank you for applying. Your pipeline workspace identity has been created. Kindly confirm your inbox verification link if prompted.
+                </p>
                 <button 
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold text-lg py-4 px-8 uppercase tracking-widest text-center transition-colors shadow-lg rounded-md disabled:opacity-50 disabled:cursor-wait"
+                  onClick={() => setIsSubmitted(false)}
+                  className="text-[#008b9c] font-bold text-xs uppercase tracking-wider hover:text-[#00a3b8] transition-colors hover:underline"
                 >
-                  {isSubmitting ? 'Uploading & Processing...' : 'Submit Registration'}
+                  Submit another application
                 </button>
               </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
+                
+                {/* 1. PERSONAL DETAILS */}
+                <section className="space-y-5">
+                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
+                    1. Personal Details & Credentials
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Full Name</label>
+                      <input 
+                        type="text" 
+                        name="fullName"
+                        value={formData.fullName}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email Address (Login Username)</label>
+                      <input 
+                        type="email" 
+                        name="email"
+                        value={formData.email}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Account Password</label>
+                      <input 
+                        type="password" 
+                        name="password"
+                        value={formData.password}
+                        required
+                        minLength={6}
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        name="phone"
+                        value={formData.phone}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="+234 ..."
+                      />
+                    </div>
+                  </div>
+                </section>
 
-            </form>
-          )}
-        </div>
-      </main>
+                {/* 2. PROFESSIONAL PROFILE */}
+                <section className="space-y-5">
+                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
+                    2. Professional Profile
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Primary Skill Area</label>
+                      <select 
+                        name="skillArea"
+                        value={formData.skillArea}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all duration-300 disabled:opacity-50 text-sm"
+                      >
+                        <option value="" className="text-slate-500">Select a skill...</option>
+                        <option value="Software Engineering">Software Engineering</option>
+                        <option value="Data Science">Data Science</option>
+                        <option value="Product Design (UI/UX)">Product Design (UI/UX)</option>
+                        <option value="Digital Marketing">Digital Marketing</option>
+                        <option value="Project Management">Project Management</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Years of Experience</label>
+                      <select 
+                        name="experience"
+                        value={formData.experience}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all duration-300 disabled:opacity-50 text-sm"
+                      >
+                        <option value="" className="text-slate-500">Select experience...</option>
+                        <option value="Entry Level (0-1 years)">Entry Level (0-1 years)</option>
+                        <option value="Mid Level (2-4 years)">Mid Level (2-4 years)</option>
+                        <option value="Senior Level (5+ years)">Senior Level (5+ years)</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
 
-      <Footer />
+                {/* 3. RESUME / CV */}
+                <section className="space-y-5">
+                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
+                    3. Resume / CV
+                  </h3>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Upload your CV (PDF or DOCX)</label>
+                    <input 
+                      type="file" 
+                      accept=".pdf,.doc,.docx"
+                      required
+                      onChange={handleFileChange}
+                      disabled={isSubmitting}
+                      className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-cyan-950/60 file:text-[#008b9c] hover:file:bg-cyan-900/60 cursor-pointer p-2 bg-[#0f172a] border border-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                    />
+                  </div>
+                </section>
+
+                {/* 4. MULTIPLE CHOICE ASSESSMENT */}
+                <section className="space-y-5">
+                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
+                    4. Assessment Questions
+                  </h3>
+                  <p className="text-xs text-slate-400 font-normal leading-relaxed -mt-2">Please answer the following 10 questions. All fields are required.</p>
+                  
+                  <div className="space-y-4">
+                    {assessmentQuestions.map((q, index) => (
+                      <div key={q.id} className="p-5 bg-[#131f35] border border-slate-700/70 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
+                        <h4 className="text-[#008b9c] font-bold text-xs uppercase tracking-wider mb-2">
+                          Question {index + 1}: {q.category}
+                        </h4>
+                        <p className="text-slate-100 text-sm font-medium mb-4 whitespace-pre-line leading-relaxed">
+                          {q.text}
+                        </p>
+                        <div className="space-y-2.5 pl-1">
+                          {q.options.map((option, i) => (
+                            <label key={i} className="flex items-start space-x-3 cursor-pointer group">
+                              <input 
+                                type="radio" 
+                                name={q.id} 
+                                value={option} 
+                                checked={formData[q.id as keyof typeof formData] === option}
+                                required
+                                onChange={handleChange}
+                                disabled={isSubmitting}
+                                className="mt-0.5 w-4 h-4 text-[#008b9c] bg-[#0f172a] border-slate-600 focus:ring-[#008b9c] focus:ring-offset-[#131f35] disabled:opacity-50"
+                              />
+                              <span className="text-xs font-semibold text-slate-400 group-hover:text-white transition-colors">
+                                {option}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* SUBMIT BUTTON */}
+                <div className="pt-2">
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-[#008b9c] hover:bg-[#007a8a] text-white font-bold text-xs uppercase tracking-widest text-center py-4 px-8 transition-colors shadow-md rounded-lg disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {isSubmitting ? 'Uploading & Processing Verification...' : 'Submit Registration & Assessment'}
+                  </button>
+                </div>
+
+              </form>
+            )}
+          </div>
+        </main>
+      </div>
+      
     </div>
   );
 }

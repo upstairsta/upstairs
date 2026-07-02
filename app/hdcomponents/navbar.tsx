@@ -12,13 +12,14 @@ export default function Navbar() {
     { name: 'How It Works', path: '/how-it-works' },
     { name: 'Internship Tracks', path: '/internship-tracks' },
     { name: 'Partner Companies', path: '/partner-companies' },
-    { name: 'Upstairs [Talent Pipeline] Startups', path: '/upstairs-startups' },
+    { name: 'Upstairs Talent Pipeline Startups', path: '/upstairs-startups' },
     { name: 'Success Stories', path: '/success-stories' },
     { name: 'FAQ', path: '/faq' },
   ];
 
   return (
-    <header className="bg-slate-900 shadow-md sticky top-0 z-50">
+    // Updated header background to match your brand-dark theme
+    <header className="bg-brand-dark shadow-md sticky top-0 z-50 border-b border-slate-200/10">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
@@ -42,14 +43,15 @@ export default function Navbar() {
               <Link 
                 key={link.name} 
                 href={link.path}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-slate-300 hover:text-brand-teal px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 {link.name}
               </Link>
             ))}
+            {/* Updated Desktop Apply Button to use brand-teal */}
             <Link 
               href="/apply"
-              className="bg-blue-600 text-white hover:bg-blue-500 px-5 py-2 rounded-md text-sm font-medium transition-colors"
+              className="bg-brand-teal text-white hover:bg-brand-teal-hover px-5 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
             >
               Apply
             </Link>
@@ -60,7 +62,7 @@ export default function Navbar() {
             <button
               onClick={() => setIsOpen(!isOpen)}
               type="button"
-              className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-2"
+              className="text-slate-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal rounded-md p-2"
             >
               <span className="sr-only">Open main menu</span>
               {isOpen ? (
@@ -79,23 +81,25 @@ export default function Navbar() {
 
       {/* Mobile Dropdown */}
       {isOpen && (
-        <div className="md:hidden bg-slate-800 border-t border-slate-700 shadow-lg absolute w-full">
+        // Updated mobile menu containers to reflect the unified dark layout
+        <div className="md:hidden bg-brand-dark/95 backdrop-blur-md border-t border-slate-200/10 shadow-lg absolute w-full left-0">
           <div className="px-2 pt-2 pb-4 space-y-1 sm:px-3">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.path}
                 onClick={() => setIsOpen(false)}
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-slate-700"
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-brand-teal hover:bg-slate-800/50 transition-colors"
               >
                 {link.name}
               </Link>
             ))}
-            <div className="pt-2">
+            <div className="pt-2 px-3">
+              {/* Updated Mobile Apply Button to use brand-teal */}
               <Link
                 href="/apply"
                 onClick={() => setIsOpen(false)}
-                className="block w-full text-center bg-blue-600 text-white hover:bg-blue-500 px-5 py-3 rounded-md text-base font-medium transition-colors"
+                className="block w-full text-center bg-brand-teal text-white hover:bg-brand-teal-hover px-5 py-3 rounded-md text-base font-medium transition-colors shadow-md"
               >
                 Apply Now
               </Link>

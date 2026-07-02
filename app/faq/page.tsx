@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import Navbar from '../hdcomponents/navbar'; 
 import Footer from '../ftcomponents/footer'; 
 
@@ -29,7 +30,6 @@ const FAQS = [
 ];
 
 export default function FAQPage() {
-  // Array state manager track index scoping for accordions toggles
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const handleToggle = (idx: number) => {
@@ -37,31 +37,44 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative text-slate-200 font-sans">
+    <div className="min-h-screen flex flex-col relative text-slate-700 font-sans bg-[#f4f7fa]">
       
-      {/* BACKGROUND IMAGE & OVERLAY */}
-      <div className="absolute inset-0 z-0 fixed">
-        <Image src="/backg.jpeg" alt="Background" fill className="object-cover" priority />
-        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]"></div>
-      </div>
-
+      {/* NAVBAR */}
       <Navbar />
 
-      {/* HEADER SECTION */}
-      <div className="relative z-10 text-white py-16 px-6 text-center mt-8">
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#00bcd4] bg-[#00bcd4]/10 px-4 py-1.5 rounded-full border border-[#00bcd4]/20">
+      {/* TOP DEEP NAVY HERO BANNER SECTION */}
+      <div className="relative bg-[#0b1528] text-white pt-24 pb-24 px-4 text-center overflow-hidden">
+        
+        {/* HERO BACKGROUND IMAGE GRAPHIC */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-luminosity">
+          <Image 
+            src="/backg.jpeg" 
+            alt="FAQ Background" 
+            fill 
+            sizes="100vw"
+            className="object-cover" 
+            priority 
+          />
+        </div>
+
+        {/* Soft atmospheric background glow enhancements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none z-10"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none z-10"></div>
+
+        {/* Header Content Context */}
+        <div className="max-w-4xl mx-auto relative z-20 space-y-4">
           
-        </span>
-        <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight mt-4 drop-shadow-lg">
-          Frequently Asked Questions
-        </h1>
-        <p className="text-slate-400 max-w-2xl mx-auto text-base md:text-lg drop-shadow-md">
-          Got operational questions regarding screening frameworks, incubation specs, or placement loops? We have mapped out the core answers below.
-        </p>
+          <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-xs md:text-sm text-slate-300 max-w-xl mx-auto font-normal leading-relaxed opacity-90">
+            Got operational questions regarding screening frameworks, incubation specs, or placement loops? We have mapped out the core answers below.
+          </p>
+        </div>
       </div>
 
-      {/* ACCORDION WRAPPER CORE ASSEMBLY */}
-      <main className="relative z-10 flex-grow py-4 px-6 mb-20 max-w-3xl mx-auto w-full">
+      {/* ACCORDION WRAPPER LIGHT CANVAS ASSEMBLY */}
+      <main className="relative z-10 flex-grow py-14 px-6 mb-20 max-w-3xl mx-auto w-full">
         <div className="space-y-4">
           {FAQS.map((faq, idx) => {
             const isOpen = openIndex === idx;
@@ -69,15 +82,15 @@ export default function FAQPage() {
             return (
               <div 
                 key={idx} 
-                className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-xl overflow-hidden shadow-lg transition-colors duration-200"
+                className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300/80 transition-all duration-300"
               >
                 {/* Trigger Control Bar Header */}
                 <button
                   onClick={() => handleToggle(idx)}
-                  className="w-full text-left p-6 flex justify-between items-center gap-4 text-white focus:outline-none hover:bg-slate-800/20"
+                  className="w-full text-left p-5 md:p-6 flex justify-between items-center gap-4 text-[#0d2347] focus:outline-none hover:bg-slate-50/50 transition-colors"
                 >
-                  <span className="font-bold text-base md:text-lg tracking-wide">{faq.q}</span>
-                  <span className={`text-xl font-bold text-[#00bcd4] transition-transform duration-200 ${isOpen ? 'rotate-45' : 'rotate-0'}`}>
+                  <span className="font-extrabold text-sm md:text-base tracking-wide leading-snug">{faq.q}</span>
+                  <span className={`text-lg font-black text-[#008b9c] transition-transform duration-300 shrink-0 select-none ${isOpen ? 'rotate-45' : 'rotate-0'}`}>
                     ＋
                   </span>
                 </button>
@@ -85,10 +98,10 @@ export default function FAQPage() {
                 {/* Expandable Slide Response Body Wrapper */}
                 <div 
                   className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    isOpen ? 'max-h-[500px] border-t border-slate-800/60' : 'max-h-0'
+                    isOpen ? 'max-h-[500px] border-t border-slate-100' : 'max-h-0'
                   }`}
                 >
-                  <p className="p-6 text-slate-400 text-sm md:text-base leading-relaxed bg-slate-950/20">
+                  <p className="p-5 md:p-6 text-slate-500 text-xs md:text-sm leading-relaxed bg-[#f4f7fa]/40 font-medium">
                     {faq.a}
                   </p>
                 </div>
@@ -98,7 +111,8 @@ export default function FAQPage() {
         </div>
       </main>
 
-      <Footer />
+      {/* SOLID DEEP NAVY FOOTER COMPONENT */}
+      
     </div>
   );
 }

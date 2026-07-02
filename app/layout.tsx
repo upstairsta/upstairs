@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Footer from "./ftcomponents/footer"; // Adjust this path if your folder layout is different
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,8 +28,18 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      {/* Updated to use your new global brand tokens */}
+      <body className="min-h-full flex flex-col bg-brand-light text-brand-heading">
+        
+        {/* Dynamic pages (like your home page) stream through right here */}
+        <div className="flex-grow flex flex-col w-full">
+          {children}
+        </div>
+
+        {/* This renders your transparent footer cleanly at the very bottom of the app */}
+        <Footer />
+        
+      </body>
     </html>
   );
-};
-
+}

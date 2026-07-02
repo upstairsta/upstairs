@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import Navbar from '../hdcomponents/navbar';
 import Footer from '../ftcomponents/footer';
 import { supabase } from '../../utils/supabase';

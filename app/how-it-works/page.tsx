@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '../hdcomponents/navbar'; 
-import Footer from '../ftcomponents/footer'; 
 
 const STEPS = [
   {
@@ -34,62 +33,82 @@ const STEPS = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen flex flex-col relative text-slate-200 font-sans">
+    <div className="min-h-screen flex flex-col relative text-slate-700 font-sans bg-[#f4f7fa]">
       
-      {/* BACKGROUND IMAGE & OVERLAY */}
-      <div className="absolute inset-0 z-0 fixed">
-        <Image src="/backg.jpeg" alt="Background" fill className="object-cover" priority />
-        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]"></div>
-      </div>
-
+      {/* NAVBAR */}
       <Navbar />
 
-      {/* HEADER SECTION */}
-      <div className="relative z-10 text-white py-16 px-6 text-center mt-8">
+      {/* TOP DEEP NAVY HERO BANNER SECTION */}
+      <div className="relative bg-[#0b1528] text-white pt-24 pb-24 px-4 text-center overflow-hidden">
         
-        <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight mt-4 drop-shadow-lg">
-          How It Works
-        </h1>
-        <p className="text-slate-400 max-w-2xl mx-auto text-base md:text-lg drop-shadow-md">
-          A predictable, battle-tested talent engineering assembly designed to take you from a baseline developer to a critical ecosystem asset.
-        </p>
+        {/* HERO BACKGROUND IMAGE GRAPHIC */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-luminosity">
+          <Image 
+            src="/backg.jpeg" 
+            alt="Process Pipeline Background" 
+            fill 
+            sizes="100vw"
+            className="object-cover" 
+            priority 
+          />
+        </div>
+
+        {/* Soft background glow decorations */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none z-10"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none z-10"></div>
+
+        {/* Header Content Context */}
+        <div className="max-w-4xl mx-auto relative z-20 space-y-4">
+          
+          <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight">
+            How It <span className="text-[#00bcd4]">Works</span>
+          </h1>
+          <p className="text-xs md:text-sm text-slate-300 max-w-xl mx-auto font-normal leading-relaxed opacity-90">
+            A predictable, battle-tested talent engineering assembly designed to take you from a baseline developer to a critical ecosystem asset.
+          </p>
+        </div>
       </div>
 
-      {/* TIMELINE TIMELINE WRAPPER */}
-      <main className="relative z-10 flex-grow py-4 px-6 mb-20 max-w-4xl mx-auto w-full">
-        <div className="relative border-l border-slate-800 ml-4 md:ml-32 space-y-12">
+      {/* MAIN CONTENT AREA - LIGHT CANVAS */}
+      <main className="relative z-10 flex-grow py-14 px-6 mb-20 max-w-4xl mx-auto w-full">
+        <div className="relative border-l border-slate-200 ml-4 md:ml-32 space-y-12">
           {STEPS.map((step, idx) => (
             <div key={idx} className="relative pl-8 md:pl-12 group">
+              
               {/* Left-floating Big Number Identifier for Desktop */}
               <div className="hidden md:flex absolute -left-32 top-0 text-right w-24 flex-col">
-                <span className="text-3xl font-black text-slate-800 group-hover:text-[#00bcd4] transition-colors">{step.num}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{step.tagline}</span>
+                <span className="text-3xl font-black text-slate-400 group-hover:text-[#008b9c] transition-colors duration-300">{step.num}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-0.5">{step.tagline}</span>
               </div>
 
               {/* Timeline Connector Dot */}
-              <div className="absolute -left-[9px] top-2 w-4 h-4 rounded-full bg-slate-900 border-2 border-slate-700 group-hover:border-[#00bcd4] group-hover:bg-[#00bcd4]/10 transition-all"></div>
+              <div className="absolute -left-[9px] top-2.5 w-4 h-4 rounded-full bg-white border-2 border-slate-200 group-hover:border-[#008b9c] group-hover:bg-[#008b9c]/10 transition-all duration-300"></div>
 
-              {/* Step Card Element */}
-              <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 p-6 rounded-xl shadow-xl hover:border-slate-700 transition-colors">
-                <div className="flex items-center gap-3 mb-2 md:hidden">
-                  <span className="text-xl font-black text-[#00bcd4]">{step.num}</span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2 py-0.5 rounded">{step.tagline}</span>
+              {/* Step Card Element - STARK WHITE PLATFORM INTERFACE */}
+              <div className="bg-white border border-slate-200 p-6 md:p-8 rounded-2xl shadow-sm hover:border-[#008b9c]/20 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center gap-3 mb-3 md:hidden">
+                  <span className="text-xl font-black text-[#008b9c]">{step.num}</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-[#f4f7fa] px-2.5 py-1 rounded-lg border border-slate-200">{step.tagline}</span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
-                <p className="text-slate-400 text-sm md:text-base leading-relaxed">{step.description}</p>
+                <h3 className="text-base md:text-lg font-black text-[#0d2347] mb-2">{step.title}</h3>
+                <p className="text-slate-500 text-xs md:text-sm leading-relaxed font-medium">{step.description}</p>
               </div>
+
             </div>
           ))}
         </div>
 
+        {/* Action Gateway Button */}
         <div className="text-center mt-16">
-          <Link href="/apply/talent" className="inline-block bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold px-8 py-4 rounded-lg transition-all shadow-lg shadow-cyan-500/10">
+          <Link 
+            href="/apply/talent" 
+            className="inline-block bg-[#008b9c] hover:bg-[#007685] text-white font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-xl transition-all shadow-sm active:scale-98"
+          >
             Initialize Your Application Sequence
           </Link>
         </div>
       </main>
-
-      <Footer />
+     
     </div>
   );
 }

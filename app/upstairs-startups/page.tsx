@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Navbar from '../hdcomponents/navbar'; // Adjust path if needed
-import Footer from '../ftcomponents/footer'; // Adjust path if needed
+import Link from 'next/link';
+import Navbar from '../hdcomponents/navbar'; 
 
 // --- DUMMY DATA FOR STARTUPS ---
 const STARTUPS = [
@@ -59,74 +59,83 @@ const STARTUPS = [
 ];
 
 export default function StartupHubPage() {
-  // State to track whether we are viewing the directory or a specific profile
   const [selectedStartup, setSelectedStartup] = useState<typeof STARTUPS[0] | null>(null);
 
   return (
-    <div className="min-h-screen flex flex-col relative text-slate-200 font-sans">
+    <div className="min-h-screen flex flex-col relative text-slate-700 font-sans bg-[#f4f7fa]">
       
-      {/* BACKGROUND IMAGE & OVERLAY */}
-      <div className="absolute inset-0 z-0 fixed">
-        <Image 
-          src="/backg.jpeg" 
-          alt="Incubation Hub background" 
-          fill 
-          className="object-cover" 
-          priority 
-        />
-        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]"></div>
-      </div>
-
+      {/* NAVBAR */}
       <Navbar />
 
-      {/* HEADER SECTION */}
-      <div className="relative z-10 text-white py-12 px-6 text-center mt-8">
-        <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg text-[#00bcd4]">
-          Upstairs [Talent Pipeline]
-        </h1>
-        <p className="text-slate-300 max-w-2xl mx-auto text-lg drop-shadow-md">
-          Explore the innovative startups built by our alumni and discover open roles to join their founding teams.
-        </p>
+      {/* TOP DEEP NAVY HERO BANNER SECTION */}
+      <div className="relative bg-[#0b1528] text-white pt-24 pb-24 px-4 text-center overflow-hidden">
+        
+        {/* HERO BACKGROUND IMAGE GRAPHIC */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-luminosity">
+          <Image 
+            src="/backg.jpeg" 
+            alt="Incubation Hub background" 
+            fill 
+            sizes="100vw"
+            className="object-cover" 
+            priority 
+          />
+        </div>
+
+        {/* Soft background lighting decoration */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none z-10"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none z-10"></div>
+
+        {/* Header Title Information Context */}
+        <div className="max-w-4xl mx-auto relative z-20 space-y-4">
+          
+          <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight">
+            Upstairs Startup Hub
+          </h1>
+          <p className="text-xs md:text-sm text-slate-300 max-w-xl mx-auto font-normal leading-relaxed opacity-90">
+            Explore the innovative startups built by our alumni and discover modern, open roles to join their founding technical teams.
+          </p>
+        </div>
       </div>
 
-      {/* MAIN CONTENT AREA */}
-      <main className="relative z-10 flex-grow py-8 px-6 mb-20 max-w-6xl mx-auto w-full">
+      {/* MAIN WORKSPACE PROFILE CONTENT CANVAS */}
+      <main className="relative z-10 flex-grow py-14 px-6 mb-20 max-w-5xl mx-auto w-full">
         
-        {/* CONDITIONAL RENDERING: Directory vs. Profile */}
+        {/* DIRECTORY VIEW SECTION PLATFORM PLATE */}
         {!selectedStartup ? (
-          /* =========================================
-             VIEW 1: STARTUP DIRECTORY
-             ========================================= */
-          <div>
-            <div className="flex justify-between items-center mb-8 border-b border-slate-700/50 pb-4">
-              <h2 className="text-2xl font-bold text-white">Startup Directory</h2>
-              <span className="bg-slate-800 border border-slate-600 text-slate-300 text-sm px-4 py-1 rounded-full">
+          <div className="animate-fadeIn">
+            <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-3">
+              <h2 className="text-sm font-black text-[#0d2347] uppercase tracking-wider">Startup Directory</h2>
+              <span className="bg-white border border-slate-200 text-slate-500 text-[11px] font-bold py-1 px-3 rounded-xl shadow-sm">
                 {STARTUPS.length} Active Startups
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* STARTUPS MATRIX GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {STARTUPS.map((startup) => (
                 <div 
                   key={startup.id} 
-                  className="bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-700/50 p-6 flex flex-col h-full shadow-xl hover:border-[#00bcd4]/50 transition-all group"
+                  className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-[#008b9c]/30 hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full group relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-xl shadow-inner border border-slate-600 group-hover:bg-[#00bcd4]/10 transition-colors">
-                      🚀
+                  <div>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center text-xl border border-slate-200 group-hover:bg-[#008b9c]/10 group-hover:border-[#008b9c]/20 transition-colors">
+                        🚀
+                      </div>
+                      <span className="bg-blue-50 text-[#1e75ff] border border-blue-100 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg">
+                        {startup.stage} Stage
+                      </span>
                     </div>
-                    <span className="bg-[#00bcd4]/10 text-[#00bcd4] text-xs font-bold px-3 py-1 rounded-full border border-[#00bcd4]/20">
-                      {startup.stage}
-                    </span>
+                    
+                    <h3 className="font-bold text-[#0d2347] group-hover:text-[#008b9c] transition-colors text-xl mb-0.5">{startup.name}</h3>
+                    <p className="text-[#008b9c] text-xs font-bold uppercase tracking-wider mb-3">{startup.industry}</p>
+                    <p className="text-slate-500 text-xs md:text-sm leading-relaxed mb-6 flex-grow">{startup.tagline}</p>
                   </div>
-                  
-                  <h3 className="font-bold text-white text-2xl mb-1">{startup.name}</h3>
-                  <p className="text-[#00bcd4] text-sm font-semibold mb-3">{startup.industry}</p>
-                  <p className="text-slate-400 text-sm mb-6 flex-grow">{startup.tagline}</p>
                   
                   <button 
                     onClick={() => setSelectedStartup(startup)}
-                    className="w-full bg-slate-800 hover:bg-[#008b9c] text-white font-bold py-3 px-4 rounded-lg transition-colors border border-slate-600 hover:border-transparent"
+                    className="w-full bg-[#008b9c] hover:bg-[#007685] text-white font-bold text-xs uppercase tracking-wider py-3 px-4 rounded-xl transition-all shadow-sm block text-center active:scale-98"
                   >
                     View Profile & Roles
                   </button>
@@ -135,94 +144,99 @@ export default function StartupHubPage() {
             </div>
           </div>
         ) : (
+          
           /* =========================================
-             VIEW 2: STARTUP PROFILE & ROLES
+             VIEW 2: INDIVIDUAL STARTUP DETAILED SHEET
              ========================================= */
-          <div className="animate-fadeIn">
-            {/* Back Button */}
+          <div className="animate-fadeIn space-y-6">
+            {/* Back Button Layout Navigation Component */}
             <button 
               onClick={() => setSelectedStartup(null)}
-              className="flex items-center space-x-2 text-slate-400 hover:text-[#00bcd4] transition-colors mb-6 font-semibold"
+              className="inline-flex items-center space-x-1.5 text-xs font-black text-slate-400 hover:text-[#008b9c] uppercase tracking-wider transition-colors mb-2"
             >
               <span>←</span>
               <span>Back to Directory</span>
             </button>
 
-            {/* Profile Header */}
-            <div className="bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-700/50 p-8 shadow-2xl mb-8">
-              <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 pb-6 border-b border-slate-700/50">
+            {/* Profile Core Header Content Module */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-5 border-b border-slate-100">
                 <div>
-                  <h2 className="text-3xl font-bold text-white mb-2">{selectedStartup.name}</h2>
-                  <div className="flex gap-3 text-sm">
-                    <span className="bg-slate-800 text-slate-300 px-3 py-1 rounded-md border border-slate-600">{selectedStartup.industry}</span>
-                    <span className="bg-[#00bcd4]/10 text-[#00bcd4] border border-[#00bcd4]/20 px-3 py-1 rounded-md font-bold">{selectedStartup.stage} Stage</span>
+                  <h2 className="text-2xl font-black text-[#0d2347] tracking-tight">{selectedStartup.name}</h2>
+                  <div className="flex gap-2 text-[11px] font-bold mt-1.5">
+                    <span className="bg-[#f4f7fa] text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200">{selectedStartup.industry}</span>
+                    <span className="bg-blue-50 text-[#1e75ff] border border-blue-100 px-2.5 py-1 rounded-lg uppercase tracking-wider">{selectedStartup.stage} Stage</span>
                   </div>
                 </div>
-                <button className="bg-[#008b9c] hover:bg-[#009fb3] text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg hidden md:block">
+                <button className="bg-[#008b9c] hover:bg-[#007685] text-white font-bold text-xs uppercase tracking-wider py-3 px-5 rounded-xl transition-all shadow-sm max-w-max">
                   Visit Website
                 </button>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">About the Company</h3>
-              <p className="text-slate-300 leading-relaxed">{selectedStartup.about}</p>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">About the Company</h3>
+                <p className="text-slate-600 text-xs md:text-sm leading-relaxed max-w-3xl">{selectedStartup.about}</p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Team Listings */}
-              <div className="bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-700/50 p-8 shadow-xl">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <span>👥</span> Team
+            {/* TWO-COLUMN LOWER SPLIT INFO MATRIX CONTAINER */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              {/* Team Node List Listings (5 cols) */}
+              <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#0d2347] pb-2 border-b border-slate-100 flex items-center gap-2">
+                  <span>👥</span> Core Team
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {selectedStartup.team.map((member, index) => (
-                    <div key={index} className="flex items-center gap-4 bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                      <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center text-2xl border border-slate-600">
+                    <div key={index} className="flex items-center gap-3 bg-[#f4f7fa] p-3 rounded-xl border border-slate-200 shadow-inner">
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl border border-slate-200 shrink-0 shadow-sm">
                         {member.avatar}
                       </div>
                       <div>
-                        <h4 className="font-bold text-white">{member.name}</h4>
-                        <p className="text-sm text-[#00bcd4]">{member.role}</p>
+                        <h4 className="font-bold text-slate-800 text-xs md:text-sm">{member.name}</h4>
+                        <p className="text-[11px] text-[#008b9c] font-bold uppercase mt-0.5">{member.role}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Open Roles */}
-              <div className="bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-700/50 p-8 shadow-xl">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <span>💼</span> Open Roles
+              {/* Open Roles Dispatch Block (7 cols) */}
+              <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#0d2347] pb-2 border-b border-slate-100 flex items-center gap-2">
+                  <span>💼</span> Open Talent Allocations
                 </h3>
                 {selectedStartup.openRoles.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {selectedStartup.openRoles.map((role, index) => (
-                      <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800/50 p-5 rounded-lg border border-slate-700 hover:border-[#00bcd4]/40 transition-colors">
+                      <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#f4f7fa] p-4 rounded-xl border border-slate-200 hover:border-[#008b9c]/20 transition-all shadow-inner">
                         <div>
-                          <h4 className="font-bold text-white text-lg">{role.title}</h4>
-                          <div className="flex gap-2 text-xs mt-2">
-                            <span className="bg-slate-900 text-slate-300 px-2 py-1 rounded border border-slate-600">{role.type}</span>
-                            <span className="bg-slate-900 text-slate-300 px-2 py-1 rounded border border-slate-600">{role.experience}</span>
+                          <h4 className="font-bold text-[#0d2347] text-xs md:text-sm leading-snug">{role.title}</h4>
+                          <div className="flex gap-2 text-[10px] font-bold mt-1.5">
+                            <span className="bg-white text-slate-500 px-2 py-0.5 rounded border border-slate-200">{role.type}</span>
+                            <span className="bg-white text-slate-500 px-2 py-0.5 rounded border border-slate-200">{role.experience}</span>
                           </div>
                         </div>
-                        <button className="bg-[#218c53] hover:bg-[#28ab65] text-white text-sm font-bold py-2 px-6 rounded-lg transition-colors whitespace-nowrap">
+                        {/* green action buttons mapped to maintain alignment specs */}
+                        <button className="bg-[#218c53] hover:bg-[#1a6f41] text-white text-[11px] font-black uppercase tracking-wider py-2 px-4 rounded-xl transition-all whitespace-nowrap shadow-sm align-middle self-start sm:self-auto active:scale-98">
                           Apply Now
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center p-8 bg-slate-800/30 rounded-lg border border-slate-700 border-dashed">
-                    <p className="text-slate-400">No open roles at the moment.</p>
+                  <div className="text-center py-12 text-slate-400 text-xs italic font-mono border border-dashed border-slate-200 rounded-xl bg-[#f4f7fa]/60">
+                    No open technical allocation tracks currently clear.
                   </div>
                 )}
               </div>
-            </div>
 
+            </div>
           </div>
         )}
 
       </main>
-
-      <Footer />
+      
     </div>
   );
 }
