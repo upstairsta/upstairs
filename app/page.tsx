@@ -11,7 +11,7 @@ export default function HomePage() {
       {/* NAVBAR */}
       <Navbar />
 
-      {/* 1. TOP DEEP NAVY HERO BANNER (DARK THEME) */}
+      {/* 1. TOP DEEP NAVY HERO BANNER (DARK THEME ON pOINT
       <div className="relative bg-[#0b1528] text-white pt-24 pb-24 px-4 text-center overflow-hidden">
         
         {/* HERO BACKGROUND IMAGE GRAPHIC */}
