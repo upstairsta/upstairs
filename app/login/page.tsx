@@ -20,19 +20,40 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // 1. Authenticate user credentials with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+      if (!authData?.user) throw new Error("No user profile returned.");
 
-      // Routing intelligence: Route users based on account privilege flags
-      if (email.includes('admin')) {
+      // 2. Query your user profile table to verify their structural database role
+      // Note: Replace 'profiles' with your actual table name if it's called 'users' or 'admins'
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles') 
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
+        // Fallback: If database lookup fails, fall back to email keyword matching so you aren't completely locked out
+        if (email.includes('admin')) {
+          router.push('/admin');
+          return;
+        }
+        throw new Error("Could not retrieve user access privileges.");
+      }
+
+      // 3. Precise Routing Engine based on real database records
+      if (profile?.role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/workspace');
       }
+
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication breakdown. Review signatures.');
     } finally {
@@ -44,7 +65,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col relative text-slate-200 font-sans bg-slate-950">
       
       {/* BACKGROUND IMAGE & UNIFIED OVERLAY */}
-      <div className="absolute inset-0 z-0 fixed">
+      <div className="absolute inset-0 z-0">
         <Image 
           src="/Background.jpeg" 
           alt="Portal background" 
