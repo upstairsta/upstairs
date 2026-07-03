@@ -29,17 +29,16 @@ export default function LoginPage() {
       if (authError) throw authError;
       if (!authData?.user) throw new Error("No user profile returned.");
 
-      // 2. Query your user profile table to verify their structural database role
-      // Note: Replace 'profiles' with your actual table name if it's called 'users' or 'admins'
+      // 2. Query the employers table using the verified UUID column structure
       const { data: profile, error: profileError } = await supabase
-        .from('profiles') 
+        .from('employers') 
         .select('role')
         .eq('id', authData.user.id)
         .single();
 
       if (profileError) {
         console.error("Profile fetch error:", profileError);
-        // Fallback: If database lookup fails, fall back to email keyword matching so you aren't completely locked out
+        // Fallback: If database entry missing or error, run email check so you don't stay locked out
         if (email.includes('admin')) {
           router.push('/admin');
           return;
