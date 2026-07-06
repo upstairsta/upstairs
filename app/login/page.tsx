@@ -32,7 +32,7 @@ export default function LoginPage() {
       const { data: profile, error: profileError } = await supabase
         .from('employers') 
         .select('role')
-        .eq('mail', email) // Matches the 'mail' column visible in image_07c2a5.png
+        .eq('email', email)                      
         .single();
 
       // 3. Dynamic Router Gateway
