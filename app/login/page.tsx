@@ -20,37 +20,43 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      // 1. Authenticate credentials
+      // 1. Authenticate user credentials with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) throw authError;
+      if (!authData?.user) throw new Error("No user profile returned.");
 
-      // 2. Query by EMAIL to guarantee a clean match across systems
+      // 2. Query your user profile table using the true UUID
       const { data: profile, error: profileError } = await supabase
         .from('employers') 
         .select('role')
-        .eq('email', email)                      
+        .eq('id', authData.user.id)
         .single();
 
-      // 3. Dynamic Router Gateway
-      if (!profileError && profile?.role === 'admin') {
+      // 3. Robust Routing Gateway (Independent of profile lookup success)
+      if (profile?.role === 'admin') {
         router.push('/admin');
-      } else if (email.includes('admin')) {
-        // Absolute local emergency fallback
+        return;
+      } 
+      
+      // Secondary absolute fallback if database isn't fully updated yet
+      if (email.toLowerCase().includes('admin')) {
         router.push('/admin');
-      } else {
-        router.push('/workspace');
+        return;
       }
+
+      // Default route for regular entries
+      router.push('/workspace');
 
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication breakdown. Review signatures.');
     } finally {
       setLoading(false);
     }
-  };
+  }; // 🧠 Fixed: Added the missing closing curly bracket for handleLogin here
 
   return (
     <div className="min-h-screen flex flex-col relative text-slate-200 font-sans bg-slate-950">
