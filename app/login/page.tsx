@@ -64,7 +64,7 @@ export default function LoginPage() {
       {/* BACKGROUND IMAGE & UNIFIED OVERLAY */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/Background.jpeg" 
+          src="/Backg.jpeg" 
           alt="Portal background" 
           fill 
           className="object-cover" 
