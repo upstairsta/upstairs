@@ -56,7 +56,7 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  }; // 🧠 Fixed: Added the missing closing curly bracket for handleLogin here
+  }; // 🧠 Fixed:
 
   return (
     <div className="min-h-screen flex flex-col relative text-slate-200 font-sans bg-slate-950">
