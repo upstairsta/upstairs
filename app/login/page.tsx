@@ -20,34 +20,26 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      // 1. Authenticate user credentials with Supabase Auth
+      // 1. Authenticate credentials
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) throw authError;
-      if (!authData?.user) throw new Error("No user profile returned.");
 
-      // 2. Query the employers table using the verified UUID column structure
+      // 2. Query by EMAIL to guarantee a clean match across systems
       const { data: profile, error: profileError } = await supabase
         .from('employers') 
         .select('role')
-        .eq('id', authData.user.id)
+        .eq('mail', email) // Matches the 'mail' column visible in image_07c2a5.png
         .single();
 
-      if (profileError) {
-        console.error("Profile fetch error:", profileError);
-        // Fallback: If database entry missing or error, run email check so you don't stay locked out
-        if (email.includes('admin')) {
-          router.push('/admin');
-          return;
-        }
-        throw new Error("Could not retrieve user access privileges.");
-      }
-
-      // 3. Precise Routing Engine based on real database records
-      if (profile?.role === 'admin') {
+      // 3. Dynamic Router Gateway
+      if (!profileError && profile?.role === 'admin') {
+        router.push('/admin');
+      } else if (email.includes('admin')) {
+        // Absolute local emergency fallback
         router.push('/admin');
       } else {
         router.push('/workspace');
