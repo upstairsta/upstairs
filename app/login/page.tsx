@@ -65,7 +65,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 z-0">
         <Image 
           src="/backg.jpeg" 
-          alt="Portal background" 
+          alt="admin background" 
           fill 
           className="object-cover" 
           priority 
