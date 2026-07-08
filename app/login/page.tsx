@@ -29,45 +29,28 @@ export default function LoginPage() {
       if (authError) throw authError;
       if (!authData?.user) throw new Error("No user profile returned.");
 
-      // 2. Query your user profile table using the true UUID
-      const { data: profile, error: profileError } = await supabase
-        .from('employers') 
-        .select('role')
-        .eq('id', authData.user.id)
-        .single();
-
-      // 3. Robust Routing Gateway (Independent of profile lookup success)
-      if (profile?.role === 'admin') {
-        router.push('/admin');
-        return;
-      } 
-      
-      // Secondary absolute fallback if database isn't fully updated yet
-      if (email.toLowerCase().includes('admin')) {
-        router.push('/admin');
-        return;
-      }
-
-      // Default route for regular entries
-      router.push('/workspace');
+      // 2. FORCE ADMIN ROUTING
+      router.push('/admin');
+      return;
 
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication breakdown. Review signatures.');
     } finally {
       setLoading(false);
     }
-  }; // 🧠 Fixed: the backgroud
+  };
 
   return (
-    <div className="min-h-screen flex flex-col relative text-slate-200 font-sans bg-slate-950">
+    // min-h-dvh handles mobile browser toolbars dynamically so layout doesn't jump
+    <div className="min-h-dvh flex flex-col relative text-slate-200 font-sans bg-slate-950 overflow-x-hidden">
       
-      {/* BACKGROUND IMAGE & UNIFIED OVERLAY */}
+      {/* BACKGROUND IMAGE & OVERLAY */}
       <div className="absolute inset-0 z-0">
         <Image 
           src="/backg.jpeg" 
           alt="admin background" 
           fill 
-          className="object-cover" 
+          className="object-cover object-center" 
           priority 
         />
         <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]"></div>
@@ -76,46 +59,47 @@ export default function LoginPage() {
       <Navbar />
 
       {/* CENTRALIZED AUTH CARD GATEWAY */}
-      <main className="relative z-10 flex-grow flex items-center justify-center p-6 w-full max-w-md mx-auto mb-20 mt-12 animate-fadeIn">
-        <div className="w-full bg-gradient-to-br from-slate-900/90 via-slate-950/90 to-cyan-950/40 backdrop-blur-md border border-slate-800 rounded-xl p-8 shadow-2xl">
+      {/* Handled mobile padding and flex containment structure */}
+      <main className="relative z-10 flex-grow flex items-center justify-center p-4 sm:p-6 w-full max-w-md mx-auto my-auto h-full">
+        <div className="w-full bg-gradient-to-br from-slate-900/95 via-slate-950/95 to-cyan-950/40 backdrop-blur-md border border-slate-800/80 rounded-xl p-5 sm:p-8 shadow-2xl transition-all duration-300">
           
-          <div className="text-center mb-6">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#00bcd4] bg-[#00bcd4]/10 px-3 py-1 rounded-full border border-[#00bcd4]/20">
+          <div className="text-center mb-5">
+            <span className="inline-block text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-[#00bcd4] bg-[#00bcd4]/10 px-2.5 py-1 rounded-full border border-[#00bcd4]/20">
               Security Node Access
             </span>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight mt-4">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight mt-3">
               Identity Validation
             </h1>
-            <p className="text-xs text-slate-400 mt-1">Connect securely to your tracking space</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-1">Connect securely to your tracking space</p>
           </div>
 
           {errorMessage && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-md mb-4 text-center font-semibold">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-2.5 rounded-md mb-4 text-center font-semibold max-w-full break-words">
               ⚠️ {errorMessage}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Account Email Address</label>
+              <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Account Email Address</label>
               <input 
                 type="email" 
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 focus:border-[#00bcd4] text-white rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#00bcd4]/20 focus:outline-none placeholder-slate-600 transition-all"
+                className="w-full bg-slate-950/50 border border-slate-800 focus:border-[#00bcd4] text-white rounded-lg p-2.5 sm:p-3 text-sm focus:ring-2 focus:ring-[#00bcd4]/20 focus:outline-none placeholder-slate-600 transition-all"
                 placeholder="name@company.com"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Security Password</label>
+              <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Security Password</label>
               <input 
                 type="password" 
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 focus:border-[#00bcd4] text-white rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#00bcd4]/20 focus:outline-none placeholder-slate-600 transition-all"
+                className="w-full bg-slate-950/50 border border-slate-800 focus:border-[#00bcd4] text-white rounded-lg p-2.5 sm:p-3 text-sm focus:ring-2 focus:ring-[#00bcd4]/20 focus:outline-none placeholder-slate-600 transition-all"
                 placeholder="••••••••••••"
               />
             </div>
@@ -123,13 +107,13 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-[#008b9c] hover:bg-[#009fb3] disabled:opacity-50 text-white font-bold text-sm uppercase tracking-wider py-3.5 rounded-lg transition-all shadow-lg shadow-cyan-500/10 mt-2"
+              className="w-full bg-[#008b9c] hover:bg-[#009fb3] active:scale-[0.99] disabled:opacity-50 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3 rounded-lg transition-all shadow-lg shadow-cyan-500/10 mt-2"
             >
               {loading ? 'Validating Signatures...' : 'Authorize Login Securely'}
             </button>
           </form>
 
-          <div className="border-t border-slate-900/80 pt-4 mt-6 text-center text-xs text-slate-500">
+          <div className="border-t border-slate-900/80 pt-3 mt-5 text-center text-[11px] sm:text-xs text-slate-500">
             Forgot your keys? Contact your assigned operations lead.
           </div>
 
