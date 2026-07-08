@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Navbar from '../hdcomponents/navbar';
-import Footer from '../ftcomponents/footer';
-import { supabase } from '../../utils/supabase';
+import Navbar from '../../hdcomponents/navbar';
+import Footer from '../../ftcomponents/footer';
+import { supabase } from '../../../utils/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
