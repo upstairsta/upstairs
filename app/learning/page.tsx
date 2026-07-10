@@ -55,13 +55,13 @@ export default function LearningPortalPage() {
       ]);
 
       let backendCourses: Course[] = [];
-      if (coursesRes.data) {
+      /*if (coursesRes.data) {
         backendCourses = coursesRes.data;
         const combinedMap = new Map();
         initialCourses.forEach(c => combinedMap.set(c.id, c));
         backendCourses.forEach(c => combinedMap.set(c.id, c));
         setCourses(Array.from(combinedMap.values()));
-      }
+      } */
 
       let loadedLessons = [...lessons];
       if (lessonsRes.data && lessonsRes.data.length > 0) {
