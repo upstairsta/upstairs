@@ -294,11 +294,37 @@ export default function TalentRegistrationPage() {
                         className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all duration-300 disabled:opacity-50 text-sm"
                       >
                         <option value="" className="text-slate-500">Select a skill...</option>
-                        <option value="Software Engineering">Software Engineering</option>
-                        <option value="Data Science">Data Science</option>
-                        <option value="Product Design (UI/UX)">Product Design (UI/UX)</option>
-                        <option value="Digital Marketing">Digital Marketing</option>
-                        <option value="Project Management">Project Management</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Human Resources">Human Resources</option>
+                        <option value="Finance & Accounting">Finance & Accounting</option>
+                        <option value="Developers">Developers</option>
+                        <option value="Data/Database">Data/Database</option>
+                        <option value="IT Support">IT Support</option>
+                        <option value="Automation & AI">Automation & AI</option>
+                        <option value="Graphic designers">Graphic designers</option>
+                        <option value="Video Editors">Video Editors</option>
+                        <option value="Project Managers">Project Managers</option>
+                        <option value="Photography">Photography</option>
+                        <option value="Social Media">Social Media</option>
+                        <option value="Writers">Writers</option>
+                        <option value="Telemarketers">Telemarketers</option>
+                        <option value="DevOps & Infrastructure">DevOps & Infrastructure</option>
+                        <option value="UI/UX">UI/UX</option>
+                        <option value="Digital marketers">Digital marketers</option>
+                        <option value="Affiliate Marketers">Affiliate Marketers</option>
+                        <option value="Customer service">Customer service</option>
+                        <option value="Virtual Assistant">Virtual Assistant</option>
+                        <option value="Business Developers">Business Developers</option>
+                        <option value="Tech Security">Tech Security</option>
+                        <option value="Content Creators">Content Creators</option>
+                        <option value="Influencers">Influencers</option>
+                        <option value="UGC's & Vloggers">UGC's & Vloggers</option>
+                        <option value="Tiktokers">Tiktokers</option>
+                        <option value="YouTubers">YouTubers</option>
+                        <option value="Tech, Digital, Business & Finance creators">Tech, Digital, Business & Finance creators</option>
+                        <option value="Lifestyle, Entertainment, Travel, Food & Culture creators">Lifestyle, Entertainment, Travel, Food & Culture creators</option>
+                        <option value="Coaches, Educators, online courses, online tutors, Authors & Trainers">Coaches, Educators, online courses, online tutors, Authors & Trainers</option>
+                        <option value="Health, Fitness & Wellness, Fashion, Beauty & Personal Branding Creators">Health, Fitness & Wellness, Fashion, Beauty & Personal Branding Creators</option>
                       </select>
                     </div>
                     <div>
