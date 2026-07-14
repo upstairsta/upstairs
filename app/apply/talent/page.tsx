@@ -1,26 +1,54 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '../../hdcomponents/navbar'; 
 import { supabase } from '../../../utils/supabase';
 
 export default function TalentRegistrationPage() {
+  const [session, setSession] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [resumeFile, setResumeFile] = useState<File | null>(null); 
   
+  // 🔒 Local states for the inline "Register/Login Guard"
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [guardEmail, setGuardEmail] = useState('');
+  const [guardPassword, setGuardPassword] = useState('');
+  const [guardFullName, setGuardFullName] = useState('');
+  const [guardError, setGuardError] = useState('');
+
+  // 🔒 Social Media Verification States (Only required for Sign Up)
+  const [hasVisitedInstagram, setHasVisitedInstagram] = useState(false);
+  const [hasVisitedLinkedIn, setHasVisitedLinkedIn] = useState(false);
+  const [hasVisitedX, setHasVisitedX] = useState(false);
+  const [hasVisitedFacebook, setHasVisitedFacebook] = useState(false);
+  const [socialConfirmChecked, setSocialConfirmChecked] = useState(false);
+
+  // 📋 Assessment & Profile Fields
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '', // Added password track field
     phone: '',
     skillArea: '',
     experience: '',
     q1: '', q2: '', q3: '', q4: '', q5: '', 
     q6: '', q7: '', q8: '', q9: '', q10: ''
   });
+
+  // Track active authentication status
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const assessmentQuestions = [
     { 
@@ -85,32 +113,89 @@ export default function TalentRegistrationPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // 🔒 Validation Check for Guard Signup Button
+  const isGuardFormValid = 
+    guardEmail.trim() !== '' &&
+    guardPassword.length >= 6 &&
+    guardFullName.trim() !== '' &&
+    hasVisitedInstagram &&
+    hasVisitedLinkedIn &&
+    hasVisitedX &&
+    hasVisitedFacebook &&
+    socialConfirmChecked;
+
+  // Handles security guard sign up
+  const handleGuardSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isGuardFormValid) {
+      setGuardError("Please complete all social verification checklist points.");
+      return;
+    }
+
     setIsSubmitting(true);
+    setGuardError('');
 
     try {
-      // 1. STEP ONE: Create the Auth Account inside Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email.trim(),
-        password: formData.password,
+      const { data, error } = await supabase.auth.signUp({
+        email: guardEmail.trim(),
+        password: guardPassword,
         options: {
           data: {
-            full_name: formData.fullName,
-            user_role: 'talent'
+            full_name: guardFullName,
+            user_role: 'talent',
+            social_verified: true
           }
         }
       });
 
-      if (authError) throw authError;
-      if (!authData?.user) throw new Error("Could not initialize your talent user profile session.");
+      if (error) throw error;
+      if (!data?.user) throw new Error("Could not construct auth credentials.");
+      
+      setSession(data.session);
+    } catch (err: any) {
+      setGuardError(err.message || 'Verification process failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-      // 2. STEP TWO: Handle CV Upload using the generated User ID to avoid directory collision
+  // Handles security guard login
+  const handleGuardLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setGuardError('');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: guardEmail.trim(),
+        password: guardPassword,
+      });
+
+      if (error) throw error;
+      setSession(data.session);
+    } catch (err: any) {
+      setGuardError(err.message || 'Login credentials incorrect.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user) {
+      alert("No active verified user session found.");
+      return;
+    }
+    
+    setIsSubmitting(true);
+
+    try {
+      // 1. Handle CV Upload
       let uploadedResumeUrl = "";
 
       if (resumeFile) {
         const fileExtension = resumeFile.name.split('.').pop();
-        const uniqueFileName = `${authData.user.id}-${Date.now()}.${fileExtension}`;
+        const uniqueFileName = `${session.user.id}-${Date.now()}.${fileExtension}`;
         const filePath = `resumes/${uniqueFileName}`;
 
         const { error: uploadError } = await supabase.storage
@@ -126,14 +211,14 @@ export default function TalentRegistrationPage() {
         uploadedResumeUrl = urlData.publicUrl;
       }
 
-      // 3. STEP THREE: Insert profile data mapped to the Auth User ID
+      // 2. Insert application profile details
       const { error: insertError } = await supabase
         .from('talents')
         .insert([
           {
-            id: authData.user.id, // Linking public profile table to auth database entry
-            full_name: formData.fullName,
-            email: formData.email.trim(),
+            id: session.user.id,
+            full_name: session.user.user_metadata?.full_name || 'Verified Talent',
+            email: session.user.email,
             phone: formData.phone,
             skill_area: formData.skillArea,
             years_experience: formData.experience,
@@ -147,13 +232,13 @@ export default function TalentRegistrationPage() {
 
       setIsSubmitted(true);
       setFormData({
-        fullName: '', email: '', password: '', phone: '', skillArea: '', experience: '',
+        phone: '', skillArea: '', experience: '',
         q1: '', q2: '', q3: '', q4: '', q5: '', q6: '', q7: '', q8: '', q9: '', q10: ''
       });
       setResumeFile(null);
 
     } catch (err: any) {
-      alert(`Registration Framework Failed: ${err.message || 'Something went wrong'}`);
+      alert(`Pipeline save failed: ${err.message || 'Something went wrong'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -162,7 +247,7 @@ export default function TalentRegistrationPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#f8fafc]">
       
-      {/* 1. HERO INTRO SECTION (DARK THEME - UNCHANGED) */}
+      {/* 1. HERO INTRO SECTION */}
       <div className="relative bg-[#0b1528] text-white overflow-hidden pb-18">
         <div className="absolute inset-0 z-0 pointer-events-none opacity-99 mix-blend-luminosity">
           <Image 
@@ -189,21 +274,26 @@ export default function TalentRegistrationPage() {
         </div>
       </div>
 
-      {/* 2. FORM WORKSPACE CONTAINER (LIGHT BACKGROUND AS ORIGINAL) */}
+      {/* 2. FORM WORKSPACE CONTAINER */}
       <div className="flex-grow bg-[#f8fafc] z-10 -mt-12 rounded-t-3xl md:rounded-t-[2.5rem] border-t border-slate-200/50 shadow-[0_-15px_30px_rgba(0,0,0,0.03)]">
         <main className="max-w-4xl mx-auto px-6 pb-24 pt-4 w-full">
           
-          {/* THE FORM CONTAINER CARD (NOW SOFT-DARK THEME) */}
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden mt-6">
             
-            {isSubmitted ? (
+            {/* Loading state before initial auth state returns */}
+            {authLoading ? (
+              <div className="p-16 text-center text-slate-400">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#008b9c] mb-4"></div>
+                <p className="text-xs font-bold uppercase tracking-widest">Checking Account Details...</p>
+              </div>
+            ) : isSubmitted ? (
               <div className="p-12 text-center animate-fadeIn">
                 <div className="w-16 h-16 bg-[#218c53] text-white rounded-full flex items-center justify-center text-2xl mx-auto mb-6 shadow-lg shadow-[#218c53]/20">
                   ✓
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-3">Registration Successful!</h2>
                 <p className="text-slate-400 mb-8 max-w-xl mx-auto text-sm leading-relaxed">
-                  Thank you for applying. Your pipeline workspace identity has been created. Kindly confirm your inbox verification link if prompted.
+                  Thank you for applying. Your pipeline workspace identity has been created and your application saved.
                 </p>
                 <button 
                   onClick={() => setIsSubmitted(false)}
@@ -212,75 +302,196 @@ export default function TalentRegistrationPage() {
                   Submit another application
                 </button>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
-                
-                {/* 1. PERSONAL DETAILS */}
-                <section className="space-y-5">
-                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
-                    1. Personal Details & Credentials
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="col-span-1 md:col-span-2">
+            ) : !session ? (
+              
+              /* ==================== SECURITY GUARD WORKSPACE ==================== */
+              <div className="p-8 md:p-12 max-w-md mx-auto animate-fadeIn">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-cyan-950/40 text-[#008b9c] mb-4">
+                    🔒
+                  </div>
+                  <h2 className="text-xl font-extrabold text-white">
+                    {isLoggingIn ? "Sign In to Your Workspace" : "Create an Account to Begin"}
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    You must be registered and authenticated to complete your application.
+                  </p>
+                </div>
+
+                {guardError && (
+                  <div className="mb-6 p-4 bg-red-950/40 border border-red-900 text-red-200 text-xs rounded-lg font-semibold">
+                    ⚠️ {guardError}
+                  </div>
+                )}
+
+                <form onSubmit={isLoggingIn ? handleGuardLogin : handleGuardSignUp} className="space-y-4">
+                  {!isLoggingIn && (
+                    <div>
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Full Name</label>
                       <input 
                         type="text" 
-                        name="fullName"
-                        value={formData.fullName}
                         required
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
-                        placeholder="John Doe"
+                        value={guardFullName}
+                        onChange={(e) => setGuardFullName(e.target.value)}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
+                        placeholder="Alex Johnson"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email Address (Login Username)</label>
-                      <input 
-                        type="email" 
-                        name="email"
-                        value={formData.email}
-                        required
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
-                        placeholder="john@example.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Account Password</label>
-                      <input 
-                        type="password" 
-                        name="password"
-                        value={formData.password}
-                        required
-                        minLength={6}
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone Number</label>
-                      <input 
-                        type="tel" 
-                        name="phone"
-                        value={formData.phone}
-                        required
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
-                        placeholder="+234 ..."
-                      />
-                    </div>
-                  </div>
-                </section>
+                  )}
 
-                {/* 2. PROFESSIONAL PROFILE */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email Address</label>
+                    <input 
+                      type="email" 
+                      required
+                      value={guardEmail}
+                      onChange={(e) => setGuardEmail(e.target.value)}
+                      className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
+                      placeholder="name@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+                    <input 
+                      type="password" 
+                      required
+                      minLength={6}
+                      value={guardPassword}
+                      onChange={(e) => setGuardPassword(e.target.value)}
+                      className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  {/* 🔒 Social Verification Checklist (Only for registration) */}
+                  {!isLoggingIn && (
+                    <div className="bg-[#0f172a] border border-slate-800 p-4 rounded-xl space-y-3">
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>🔒</span> Social Verification Checklist
+                      </h4>
+                      <p className="text-[10px] text-slate-400 leading-normal">
+                        You must visit and follow us on all 4 platforms to unlock your registration.
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <a 
+                          href="https://www.instagram.com/upstairsofficial" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={() => setHasVisitedInstagram(true)}
+                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                            hasVisitedInstagram ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          {hasVisitedInstagram ? '✓ Instagram' : '📸 Instagram'}
+                        </a>
+
+                        <a 
+                          href="https://www.linkedin.com" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={() => setHasVisitedLinkedIn(true)}
+                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                            hasVisitedLinkedIn ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          {hasVisitedLinkedIn ? '✓ LinkedIn' : '💼 LinkedIn'}
+                        </a>
+
+                        <a 
+                          href="https://x.com" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={() => setHasVisitedX(true)}
+                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                            hasVisitedX ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          {hasVisitedX ? '✓ X Profile' : '🐦 Follow X'}
+                        </a>
+
+                        <a 
+                          href="https://facebook.com" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={() => setHasVisitedFacebook(true)}
+                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                            hasVisitedFacebook ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          {hasVisitedFacebook ? '✓ Facebook' : '👥 Facebook'}
+                        </a>
+                      </div>
+
+                      <label className="flex items-start gap-2 pt-2 border-t border-slate-800/80 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={socialConfirmChecked}
+                          onChange={(e) => setSocialConfirmChecked(e.target.checked)}
+                          className="mt-0.5 rounded text-[#008b9c] focus:ring-[#008b9c] bg-[#131f35] border-slate-700"
+                        />
+                        <span className="text-[10px] text-slate-400 leading-tight">
+                          I confirm I have followed all 4 platforms. Unfollowing later voids my onboarding entry.
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting || (!isLoggingIn && !isGuardFormValid)}
+                    className={`w-full text-white font-bold text-xs uppercase tracking-widest text-center py-3.5 px-8 transition-colors shadow-md rounded-lg disabled:opacity-60 disabled:cursor-not-allowed mt-2 ${
+                      isLoggingIn || isGuardFormValid 
+                        ? 'bg-[#008b9c] hover:bg-[#007a8a]' 
+                        : 'bg-slate-800 text-slate-500 border border-slate-700/60'
+                    }`}
+                  >
+                    {isSubmitting 
+                      ? 'Authenticating...' 
+                      : isLoggingIn 
+                        ? 'Unlock Form via Login ➡️' 
+                        : 'Register Secure Account & Unlock Form ➡️'
+                    }
+                  </button>
+                </form>
+
+                <div className="mt-6 pt-4 border-t border-slate-800 text-center">
+                  <button 
+                    onClick={() => {
+                      setIsLoggingIn(!isLoggingIn);
+                      setGuardError('');
+                    }}
+                    className="text-[#008b9c] text-xs font-bold uppercase tracking-wider hover:text-[#00a3b8] transition-colors"
+                  >
+                    {isLoggingIn ? "Need an account? Sign Up" : "Already registered? Sign In"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              
+              /* ==================== SECURE TALENT FORM & APPLICATION ==================== */
+              <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10 animate-fadeIn">
+                
+                {/* Active user status tag */}
+                <div className="flex items-center justify-between p-3.5 bg-cyan-950/20 border border-cyan-900/50 rounded-xl">
+                  <div className="text-xs">
+                    <span className="text-slate-400 block">Logged in as:</span>
+                    <strong className="text-cyan-400">{session.user.email}</strong>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => supabase.auth.signOut()}
+                    className="text-xs text-red-400 font-bold hover:underline"
+                  >
+                    Logout
+                  </button>
+                </div>
+
+                {/* 1. PROFESSIONAL PROFILE */}
                 <section className="space-y-5">
                   <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
-                    2. Professional Profile
+                    1. Professional Profile
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
@@ -343,13 +554,26 @@ export default function TalentRegistrationPage() {
                         <option value="Senior Level (5+ years)">Senior Level (5+ years)</option>
                       </select>
                     </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        name="phone"
+                        value={formData.phone}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="+234 ..."
+                      />
+                    </div>
                   </div>
                 </section>
 
-                {/* 3. RESUME / CV */}
+                {/* 2. RESUME / CV */}
                 <section className="space-y-5">
                   <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
-                    3. Resume / CV
+                    2. Resume / CV
                   </h3>
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Upload your CV (PDF or DOCX)</label>
@@ -364,10 +588,10 @@ export default function TalentRegistrationPage() {
                   </div>
                 </section>
 
-                {/* 4. MULTIPLE CHOICE ASSESSMENT */}
+                {/* 3. MULTIPLE CHOICE ASSESSMENT */}
                 <section className="space-y-5">
                   <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
-                    4. Assessment Questions
+                    3. Assessment Questions
                   </h3>
                   <p className="text-xs text-slate-400 font-normal leading-relaxed -mt-2">Please answer the following 10 questions. All fields are required.</p>
                   

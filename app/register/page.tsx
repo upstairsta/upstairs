@@ -1,0 +1,309 @@
+"use client";
+
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import Navbar from '../hdcomponents/navbar'; 
+import Footer from '../ftcomponents/footer';
+import { supabase } from '../../utils/supabase';
+
+export default function EmployerRegistrationPage() {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const [formData, setFormData] = useState({
+    companyName: '',
+    contactName: '',
+    email: '',
+    password: '',
+    phone: '',
+    industry: '',
+    rolesNeeded: '',
+    website: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      // ONE UNIFIED SIGNUP: Passes metadata to the trigger which configures both profiles and employers tables
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email.trim(),
+        password: formData.password,
+        options: {
+          data: {
+            company_name: formData.companyName,
+            contact_name: formData.contactName,
+            user_role: 'employer', // Tells the database trigger to populate the employers table
+            phone: formData.phone,
+            industry: formData.industry,
+            roles_needed: formData.rolesNeeded,
+            company_website: formData.website,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData?.user) throw new Error("Could not initialize your user profile session.");
+
+      setIsSubmitted(true);
+      setFormData({
+        companyName: '', contactName: '', email: '', password: '', phone: '', industry: '', rolesNeeded: '', website: ''
+      });
+
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Something went wrong during provisioning.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col font-sans bg-white relative">
+      
+      {/* 1. HERO INTRO SECTION (DARK THEME - STAYS TO ANCHOR NAVBAR/HERO) */}
+      <div className="relative bg-[#0b1528] text-white overflow-hidden pb-18">
+        
+        {/* Background Image with high-visibility stacking */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-99 mix-blend-luminosity">
+          <Image 
+            src="/backg.jpeg" 
+            alt="Employer background" 
+            fill 
+            className="object-cover object-center opacity-35" 
+            priority 
+          />
+          <div className="absolute inset-0 bg-[#0f172a]/40 backdrop-blur-[1px]"></div>
+        </div>
+
+        <div className="relative z-10">
+          <Navbar />
+
+          <div className="max-w-5xl mx-auto px-6 text-center mt-20 md:mt-28 animate-fadeIn">
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">
+              Partner Network Intake
+            </h1>
+            <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
+              Deploy vetted tech talent straight into your scaling engineering teams. Create your account and submit hiring criteria.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. FORM WORKSPACE CONTAINER (CLEAN WHITE BACKGROUND LAYOUT) */}
+      <div className="flex-grow bg-white z-10 -mt-12 rounded-t-3xl md:rounded-t-[2.5rem] border-t border-slate-100 shadow-[0_-15px_30px_rgba(0,0,0,0.02)]">
+        <main className="max-w-3xl mx-auto px-6 pb-24 pt-4 w-full">
+          
+          {/* THE FORM CARD CONTAINER: SOLID DARK BACKGROUND */}
+          <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-[0_20px_40px_rgba(15,23,42,0.15)] overflow-hidden mt-6">
+            
+            {isSubmitted ? (
+              <div className="p-12 text-center animate-fadeIn">
+                <div className="w-16 h-16 bg-[#218c53] text-white rounded-full flex items-center justify-center text-2xl mx-auto mb-6 shadow-lg shadow-[#218c53]/20">
+                  ✓
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-3">Registration Successful!</h2>
+                <p className="text-slate-400 mb-8 max-w-md mx-auto text-sm leading-relaxed">
+                  Your profile workspace has been provisioned. If email confirmations are enabled, kindly verify the confirmation link dispatched to your inbox.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <Link 
+                    href="/login" 
+                    className="bg-[#218c53] hover:bg-[#1b7545] text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition-colors"
+                  >
+                    Go to Identity Validation
+                  </Link>
+                  <button 
+                    onClick={() => setIsSubmitted(false)}
+                    className="text-[#28ab65] font-bold text-xs uppercase tracking-wider hover:text-[#218c53] transition-colors hover:underline"
+                  >
+                    Register another profile
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
+                
+                {errorMessage && (
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3.5 rounded-lg text-center font-semibold max-w-full break-words">
+                    ⚠️ {errorMessage}
+                  </div>
+                )}
+
+                {/* SECTION 1: CORPORATE ENTITY PROFILES */}
+                <section className="space-y-5">
+                  <h3 className="text-base font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2.5 flex items-center gap-2">
+                    <span className="text-[#28ab65]">🏢</span> 1. Company Information
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Company Registered Legal Name</label>
+                      <input 
+                        type="text" 
+                        name="companyName"
+                        value={formData.companyName}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="e.g. Acme Tech Global"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Industry Vertical</label>
+                      <select 
+                        name="industry"
+                        value={formData.industry}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none transition-all duration-300 disabled:opacity-50 text-sm"
+                      >
+                        <option value="" className="bg-[#1e293b]">Select industry...</option>
+                        <option value="FinTech" className="bg-[#1e293b]">FinTech</option>
+                        <option value="HealthTech" className="bg-[#1e293b]">HealthTech</option>
+                        <option value="EdTech" className="bg-[#1e293b]">EdTech</option>
+                        <option value="SaaS / Enterprise" className="bg-[#1e293b]">SaaS / Enterprise</option>
+                        <option value="AgriTech" className="bg-[#1e293b]">AgriTech</option>
+                        <option value="E-Commerce" className="bg-[#1e293b]">E-Commerce</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Corporate Website (Optional)</label>
+                      <input 
+                        type="url" 
+                        name="website"
+                        value={formData.website}
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* SECTION 2: POINT OF CONTACT METADATA & PASSWORD ACCESS */}
+                <section className="space-y-5">
+                  <h3 className="text-base font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2.5 flex items-center gap-2">
+                    <span className="text-[#28ab65]">👤</span> 2. Primary Account Credentials
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Contact Representative Name</label>
+                      <input 
+                        type="text" 
+                        name="contactName"
+                        value={formData.contactName}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="e.g. Sarah Jenkins (HR Director)"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Official Business Email</label>
+                      <input 
+                        type="email" 
+                        name="email"
+                        value={formData.email}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="s.jenkins@acme.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Secure Password</label>
+                      <input 
+                        type="password" 
+                        name="password"
+                        value={formData.password}
+                        required
+                        minLength={6}
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="••••••••"
+                      />
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Direct Phone Number</label>
+                      <input 
+                        type="tel" 
+                        name="phone"
+                        value={formData.phone}
+                        required
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
+                        placeholder="+234 ..."
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* SECTION 3: PLACEMENT SCOPE & TALENT DEMAND */}
+                <section className="space-y-5">
+                  <h3 className="text-base font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2.5 flex items-center gap-2">
+                    <span className="text-[#28ab65]">🎯</span> 3. Hiring Requirements
+                  </h3>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Target Roles & Specializations Desired</label>
+                    <textarea 
+                      name="rolesNeeded"
+                      value={formData.rolesNeeded}
+                      required
+                      onChange={handleChange}
+                      disabled={isSubmitting}
+                      rows={4}
+                      className="w-full bg-[#1e293b] border border-slate-700 text-white font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#28ab65] focus:border-[#28ab65] focus:outline-none placeholder-slate-500 transition-all duration-300 font-sans resize-none disabled:opacity-50 text-sm"
+                      placeholder="Describe the skill stacks you are hunting for (e.g. 2 Frontend React Interns, 1 Senior Node JS Backend infrastructure architect, etc.)...."
+                    />
+                  </div>
+                </section>
+
+                {/* SUBMIT DEPLOYMENT BUTTON */}
+                <div className="pt-2 space-y-4">
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-[#218c53] hover:bg-[#1b7545] text-white font-bold text-xs uppercase tracking-widest text-center py-4 px-8 transition-colors shadow-md rounded-lg disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {isSubmitting ? 'Provisioning Security Profile...' : 'Complete Register & Submit Brief'}
+                  </button>
+
+                  <div className="text-center text-xs text-slate-400">
+                    Already registered?{' '}
+                    <Link href="/login" className="text-[#28ab65] font-bold hover:underline">
+                      Log in here
+                    </Link>
+                  </div>
+                </div>
+
+              </form>
+            )}
+
+          </div>
+        </main>
+      </div>
+      <Footer />
+    </div>
+  );
+}

@@ -13,7 +13,10 @@ function ApplyForm() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState(''); // 👤 Needed for Registration
+  const [fullName, setFullName] = useState('');
+  
+  // ⚙️ Role State: 'talent' or 'employer'
+  const [role, setRole] = useState<'talent' | 'employer'>('talent');
   
   // ⚙️ Toggle between Login and Register Mode
   const [isRegisterMode, setIsRegisterMode] = useState(false); 
@@ -28,15 +31,21 @@ function ApplyForm() {
   const [authLoading, setAuthLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // 🚨 STEP 2: Intercept middleware redirect messages
+  // 🚨 Pre-select role and handle redirect warnings
   useEffect(() => {
+    const urlRole = searchParams.get('role');
+    if (urlRole === 'employer' || urlRole === 'talent') {
+      setRole(urlRole);
+      setIsRegisterMode(true); // Auto-open register mode if arriving from a specific CTA
+    }
+
     const message = searchParams.get('message');
     if (message) {
       setErrorMessage(message);
     }
   }, [searchParams]);
 
-  // Validation logic for registration submission (Guarantees all 4 channels + checkbox)
+  // Validation logic (All social actions required)
   const isRegisterFormValid = 
     email.trim() !== '' && 
     password.length >= 6 && 
@@ -59,37 +68,50 @@ function ApplyForm() {
           throw new Error("Please follow all our social media handles to proceed.");
         }
 
+        // We pass name and role in 'options.data'. Our DB trigger will capture this!
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password: password,
           options: {
             data: {
               full_name: fullName,
+              role: role,
+              social_verified: true
             }
           }
         });
 
         if (error) throw error;
 
-        // Record profile entry in database
-        if (data.user) {
-          await supabase
-            .from('profiles')
-            .insert([{ id: data.user.id, full_name: fullName, email: email, social_verified: true }]);
-        }
-
-        alert("Registration successful! Proceeding to your workspace.");
-        router.push('/workspace');
+        alert("Registration successful! Proceeding to your secure workspace.");
+        
+        // ✅ CORRECTED: Route matches your newly renamed hyphenated dashboard routes
+        router.push(`/workspace/${role}-dashboard`);
 
       } else {
         // --- 2. LOGIN PATH ---
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: password,
         });
 
-        if (error) throw error;
-        router.push('/workspace');
+        if (authError) throw authError;
+
+        if (authData.user) {
+          // Look up user's profile to retrieve their role
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', authData.user.id)
+            .single();
+
+          if (profileError || !profile) {
+            throw new Error("Unable to retrieve your designated portal role.");
+          }
+
+          // ✅ CORRECTED: Route matches your newly renamed hyphenated dashboard routes
+          router.push(`/workspace/${profile.role}-dashboard`);
+        }
       }
     } catch (err: any) {
       setErrorMessage(err.message || "Authentication processing failed.");
@@ -135,7 +157,7 @@ function ApplyForm() {
             </button>
           </div>
 
-          {/* Inline Alert Notification block for errors and middleware warnings */}
+          {/* Inline Alert Notification block */}
           {errorMessage && (
             <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-xl text-xs font-semibold tracking-wide text-center">
               ⚠️ {errorMessage}
@@ -145,6 +167,37 @@ function ApplyForm() {
           {/* Authentication Form UI */}
           <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
             
+            {/* 👥 ROLE SELECTOR: Only visible during registration mode */}
+            {isRegisterMode && (
+              <div className="animate-fadeIn">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">My Profile Type</label>
+                <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-700/80">
+                  <button
+                    type="button"
+                    onClick={() => setRole('talent')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                      role === 'talent'
+                        ? 'bg-[#008b9c] text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🚀 Tech Talent
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('employer')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                      role === 'employer'
+                        ? 'bg-[#008b9c] text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🏢 Employer
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* FULL NAME: Only visible during signup mode */}
             {isRegisterMode && (
               <div className="animate-fadeIn">
@@ -195,7 +248,6 @@ function ApplyForm() {
                 </p>
 
                 <div className="grid grid-cols-2 gap-2">
-                  {/* Instagram Button */}
                   <a 
                     href="https://www.instagram.com/upstairsofficial?igsh=MWxiZncxdG16enh1aQ==" 
                     target="_blank" 
@@ -210,7 +262,6 @@ function ApplyForm() {
                     {hasVisitedInstagram ? '✓ Instagram' : '📸 Instagram'}
                   </a>
 
-                  {/* LinkedIn Button */}
                   <a 
                     href="https://www.linkedin.com/in/upstairs-upstairs-164a77420?utm_source=share_via&utm_content=profile&utm_medium=member_android" 
                     target="_blank" 
@@ -225,7 +276,6 @@ function ApplyForm() {
                     {hasVisitedLinkedIn ? '✓ LinkedIn' : '💼 LinkedIn'}
                   </a>
 
-                  {/* X (Twitter) Button */}
                   <a 
                     href="https://x.com/UpStairsOfficia" 
                     target="_blank" 
@@ -240,7 +290,6 @@ function ApplyForm() {
                     {hasVisitedX ? '✓ X Profile' : '🐦 Follow X'}
                   </a>
 
-                  {/* Facebook Button */}
                   <a 
                     href="https://www.facebook.com/share/18yeFwJzMF/" 
                     target="_blank" 
@@ -256,7 +305,6 @@ function ApplyForm() {
                   </a>
                 </div>
 
-                {/* Explicit Agreement Checkbox */}
                 <label className="flex items-start gap-2 pt-2.5 border-t border-slate-800/80 cursor-pointer">
                   <input 
                     type="checkbox" 
@@ -293,12 +341,16 @@ function ApplyForm() {
           <div className="pt-4 border-t border-slate-800 space-y-3">
             <p className="text-xs text-center font-medium text-slate-400">Need a pipeline account? Choose your path:</p>
             <div className="grid grid-cols-2 gap-2.5">
+              
+              {/* ✅ CORRECTED: Linking directly to the respective sign-up pages */}
               <Link 
                 href="/apply/talent"
                 className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
               >
                 <span>🚀</span> Talent
               </Link>
+              
+              {/* ✅ CORRECTED: Linking directly to the respective sign-up pages */}
               <Link 
                 href="/apply/employer"
                 className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
@@ -340,7 +392,6 @@ export default function ApplyPage() {
         <div className="relative z-10">
           <Navbar />
 
-          {/* Wrap inside Suspense to handle useSearchParams hook usage during SSR builds */}
           <Suspense fallback={
             <div className="flex justify-center items-center py-24 text-slate-400">
               Loading security portal session...
@@ -397,8 +448,9 @@ export default function ApplyPage() {
                 </p>
               </div>
 
+              {/* ✅ CORRECTED: Pointing workspace link to the new hyphenated talent path */}
               <Link 
-                href="/workspace"
+                href="/workspace/talent-dashboard"
                 className="w-full block text-center bg-[#218c53] hover:bg-[#1b7545] text-white font-bold text-xs tracking-widest uppercase py-4 px-6 rounded-lg transition-colors shadow-md"
               >
                 Enter My Workspace

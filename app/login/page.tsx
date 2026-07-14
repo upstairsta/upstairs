@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import Navbar from '../hdcomponents/navbar';
 import Footer from '../ftcomponents/footer';
 import { supabase } from '../../utils/supabase';
@@ -20,18 +21,41 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      // 1. Authenticate user credentials with Supabase Auth
+      // 1. Authenticate credentials with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (authError) throw authError;
       if (!authData?.user) throw new Error("No user profile returned.");
 
-      // 2. FORCE ADMIN ROUTING
-      router.push('/admin');
-      return;
+      // 2. Fetch the user's role from the profiles table to determine the workspace destination
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error("Your credentials validated, but we couldn't resolve your workspace configuration.");
+      }
+
+      // 3. DYNAMIC SECURITY ROUTING
+      switch (profile.role) {
+        case 'admin':
+          router.push('/admin');
+          break;
+        case 'employer':
+          router.push('/workspace/employer');
+          break;
+        case 'talent':
+          router.push('/workspace/talent');
+          break;
+        default:
+          // Fallback if role doesn't match standard profiles
+          router.push('/workspace/talent');
+      }
 
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication breakdown. Review signatures.');
@@ -41,7 +65,6 @@ export default function LoginPage() {
   };
 
   return (
-    // min-h-dvh handles mobile browser toolbars dynamically so layout doesn't jump
     <div className="min-h-dvh flex flex-col relative text-slate-200 font-sans bg-slate-950 overflow-x-hidden">
       
       {/* BACKGROUND IMAGE & OVERLAY */}
@@ -59,7 +82,6 @@ export default function LoginPage() {
       <Navbar />
 
       {/* CENTRALIZED AUTH CARD GATEWAY */}
-      {/* Handled mobile padding and flex containment structure */}
       <main className="relative z-10 flex-grow flex items-center justify-center p-4 sm:p-6 w-full max-w-md mx-auto my-auto h-full">
         <div className="w-full bg-gradient-to-br from-slate-900/95 via-slate-950/95 to-cyan-950/40 backdrop-blur-md border border-slate-800/80 rounded-xl p-5 sm:p-8 shadow-2xl transition-all duration-300">
           
@@ -113,8 +135,20 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="border-t border-slate-900/80 pt-3 mt-5 text-center text-[11px] sm:text-xs text-slate-500">
-            Forgot your keys? Contact your assigned operations lead.
+          {/* DYNAMIC REGISTRATION GATEWAY */}
+          <div className="border-t border-slate-800/60 pt-4 mt-6 text-center space-y-2">
+            <p className="text-[11px] sm:text-xs text-slate-400">
+              New hiring partner?{' '}
+              <Link 
+                href="/register" 
+                className="text-[#00bcd4] hover:text-[#009fb3] font-bold transition-colors hover:underline"
+              >
+                Register Your Company
+              </Link>
+            </p>
+            <div className="text-[10px] text-slate-500">
+              Forgot your keys? Contact your assigned operations lead.
+            </div>
           </div>
 
         </div>
