@@ -39,11 +39,41 @@ export default function Footer() {
         <div>
           <h3 className="font-bold text-lg mb-5 text-white">Follow Us</h3>
           <div className="flex space-x-4 text-sm text-slate-400">
-            <span className="hover:text-brand-teal cursor-pointer transition-colors duration-300">Facebook</span>
-            <span>/</span>
-            <span className="hover:text-brand-teal cursor-pointer transition-colors duration-300">Twitter</span>
-            <span>/</span>
-            <span className="hover:text-brand-teal cursor-pointer transition-colors duration-300">LinkedIn</span>
+            <a 
+              href="https://www.facebook.com/share/18yeFwJzMF/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-brand-teal cursor-pointer transition-colors duration-300"
+              >
+                Facebook
+              </a>
+              <span>/</span>
+              <a 
+                href="https://x.com/UpStairsOfficia" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-brand-teal cursor-pointer transition-colors duration-300"
+              >
+                Twitter
+              </a>
+              <span>/</span>
+              <a 
+                href="https://www.instagram.com/upstairsofficial?igsh=MWxiZncxdG16enh1aQ==" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-brand-teal cursor-pointer transition-colors duration-300"
+              >
+                Instagram
+              </a>
+              <span>/</span>
+              <a 
+                href="https://www.linkedin.com/in/upstairs-upstairs-164a77420?utm_source=share_via&utm_content=profile&utm_medium=member_android" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-brand-teal cursor-pointer transition-colors duration-300"
+              >
+                LinkedIn
+              </a>
           </div>
         </div>
       </div>

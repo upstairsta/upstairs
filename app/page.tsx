@@ -66,14 +66,14 @@ export default function HomePage() {
             {/* Card 1: Virtual Academic Portal Link */}
             <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col justify-between items-center text-center transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] border-b-4 hover:border-b-brand-teal group">
               <div className="mb-8 flex flex-col items-center">
-                <div className="w-14 h-14 bg-cyan-50 rounded-xl flex items-center justify-center text-xl border border-cyan-100 mb-5 group-hover:bg-cyan-100/70 transition-colors">
+                <div className="w-14 h-14 bg-cyan-50 rounded-xl flex items-center justify-center text-xl border border-cyan-100 mb-9 group-hover:bg-cyan-100/70 transition-colors">
                   <span className="text-2xl">📚</span>
                 </div>
-                <h2 className="text-xl font-bold text-brand-heading mb-3 tracking-tight group-hover:text-brand-teal transition-colors duration-200">
+                <h2 className="text-xl font-bold text-brand-heading mb-5 tracking-tight group-hover:text-brand-teal transition-colors duration-200">
                   Learning Materials Portal
                 </h2>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-sm">
-                  Access your training track syllabus, conceptual technical notes arrays, and lecture resource video streams.
+                  Access your training materials, course syllabus, technical notes, and video lessons to help you build job-ready skills.
                 </p>
               </div>
               <Link 
@@ -94,7 +94,7 @@ export default function HomePage() {
                   Internal Admin
                 </h2>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-sm">
-                  Administrative monitoring pipeline systems for checking vetting logs, scheduling operations, and profile evaluations.
+                  A secure dashboard for administrators to manage registrations, verify profiles, schedule interviews, monitor applications, and oversee platform operations.
                 </p>
               </div>
               <Link 

@@ -183,7 +183,7 @@ export default function TalentRegistrationPage() {
               Talent Registration
             </h1>
             <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
-              Join the Upstairs [Talent Pipeline] network. Showcase your skills, upload your CV, and get matched with top employers.
+              Join the Upstairs Talent Pipeline network. Showcase your skills, upload your CV, and get matched with top employers.
             </p>
           </div>
         </div>
