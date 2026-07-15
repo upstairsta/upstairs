@@ -55,7 +55,8 @@ export default function EmployerRegistrationPage() {
           data: {
             company_name: formData.companyName,
             contact_name: formData.contactName,
-            user_role: 'employer'
+            full_name: formData.contactName, // Maps nicely to common profile schemas
+            role: 'employer' // 🛡️ Updated to 'role' to match our DB trigger pattern
           }
         }
       });
@@ -83,7 +84,7 @@ export default function EmployerRegistrationPage() {
       if (dbError) throw dbError;
 
       // 3. STEP THREE: Redirect to dashboard upon successful registration
-      router.push('/employer/dashboard');
+      router.push('/workspace/employer-dashboard');
 
     } catch (err: any) {
       alert(`Registration Framework Failed: ${err.message || 'Something went wrong'}`);

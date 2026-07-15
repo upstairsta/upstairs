@@ -14,7 +14,7 @@ export default function TalentRegistrationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [resumeFile, setResumeFile] = useState<File | null>(null); 
 
-  // 📋 Assessment & Profile Fields
+  // 📋 Profile & Assessment Fields (All Criteria Handled)
   const [formData, setFormData] = useState({
     phone: '',
     skillArea: '',
@@ -23,15 +23,14 @@ export default function TalentRegistrationPage() {
     q6: '', q7: '', q8: '', q9: '', q10: ''
   });
 
-  // Check session on mount and handle redirects
+  // Check session on mount and handle redirects if not logged in
   useEffect(() => {
     let mounted = true;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (mounted) {
         if (!session) {
-          // ➔ If there is no active session, redirect them to register/login on the Apply page
-          router.push('/apply?role=talent&message=Please register or log in first to access this form.');
+          router.push('/apply?role=talent&message=Please sign in or register to complete your talent application.');
         } else {
           setSession(session);
           setAuthLoading(false);
@@ -129,7 +128,15 @@ export default function TalentRegistrationPage() {
     setIsSubmitting(true);
 
     try {
-      // 1. Handle CV Upload
+      // 🛡️ IMPLEMENTATION: Ensure user metadata explicitly holds 'talent' role
+      if (session.user.user_metadata?.role !== 'talent') {
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: { role: 'talent' }
+        });
+        if (updateError) throw new Error(`Failed to assign talent metadata role: ${updateError.message}`);
+      }
+
+      // Handle CV Upload to Storage Bucket
       let uploadedResumeUrl = "";
 
       if (resumeFile) {
@@ -150,7 +157,7 @@ export default function TalentRegistrationPage() {
         uploadedResumeUrl = urlData.publicUrl;
       }
 
-      // 2. Insert application profile details
+      // Insert all application details matching registration criteria
       const { error: insertError } = await supabase
         .from('talents')
         .insert([
@@ -186,7 +193,7 @@ export default function TalentRegistrationPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#f8fafc]">
       
-      {/* 1. HERO INTRO SECTION */}
+      {/* HERO INTRO */}
       <div className="relative bg-[#0b1528] text-white overflow-hidden pb-18">
         <div className="absolute inset-0 z-0 pointer-events-none opacity-99 mix-blend-luminosity">
           <Image 
@@ -204,35 +211,34 @@ export default function TalentRegistrationPage() {
 
           <div className="max-w-5xl mx-auto px-6 text-center mt-20 md:mt-28 animate-fadeIn">
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">
-              Talent Application
+              Talent Registration
             </h1>
             <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
-              Join the Upstairs Talent Pipeline network. Showcase your skills, upload your CV, and complete your alignment assessment.
+              Submit your professional credentials, verify your technical background, and complete the vetting assessment.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 2. FORM WORKSPACE CONTAINER */}
+      {/* FORM CONTAINER */}
       <div className="flex-grow bg-[#f8fafc] z-10 -mt-12 rounded-t-3xl md:rounded-t-[2.5rem] border-t border-slate-200/50 shadow-[0_-15px_30px_rgba(0,0,0,0.03)]">
         <main className="max-w-4xl mx-auto px-6 pb-24 pt-4 w-full">
           
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden mt-6">
             
-            {/* Loading state before redirect or active session loads */}
             {authLoading ? (
               <div className="p-16 text-center text-slate-400">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#008b9c] mb-4"></div>
-                <p className="text-xs font-bold uppercase tracking-widest">Checking Account Details...</p>
+                <p className="text-xs font-bold uppercase tracking-widest">Verifying Account Identity...</p>
               </div>
             ) : isSubmitted ? (
               <div className="p-12 text-center animate-fadeIn">
                 <div className="w-16 h-16 bg-[#218c53] text-white rounded-full flex items-center justify-center text-2xl mx-auto mb-6 shadow-lg shadow-[#218c53]/20">
                   ✓
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3">Registration Successful!</h2>
+                <h2 className="text-2xl font-bold text-white mb-3">Registration Complete!</h2>
                 <p className="text-slate-400 mb-8 max-w-xl mx-auto text-sm leading-relaxed">
-                  Thank you for applying. Your pipeline application has been recorded.
+                  Your professional credentials and assessment scores have been saved to our talent pipeline database.
                 </p>
                 <button 
                   onClick={() => setIsSubmitted(false)}
@@ -243,29 +249,53 @@ export default function TalentRegistrationPage() {
               </div>
             ) : (
               
-              /* ==================== ACTIVE FORM WORKSPACE ==================== */
               <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8 text-left text-slate-200">
                 
-                {/* 📋 PROFILE DETAILED SUBSECTION */}
+                {/* 1. PERSONAL DETAILS SECTION */}
                 <div className="space-y-6">
                   <h3 className="text-lg font-bold text-white border-b border-slate-700/60 pb-2">
-                    1. Professional Coordinates
+                    1. Personal Details
                   </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Phone Number</label>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
                       <input 
-                        type="tel"
-                        name="phone"
-                        required
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+234..."
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
+                        type="text"
+                        disabled
+                        value={session?.user?.user_metadata?.full_name || 'Authenticated Talent'}
+                        className="w-full bg-[#0f172a]/50 border border-slate-800 text-slate-400 rounded-lg p-3 cursor-not-allowed text-sm"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                      <input 
+                        type="email"
+                        disabled
+                        value={session?.user?.email || ''}
+                        className="w-full bg-[#0f172a]/50 border border-slate-800 text-slate-400 rounded-lg p-3 cursor-not-allowed text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Phone Number</label>
+                    <input 
+                      type="tel"
+                      name="phone"
+                      required
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+234..."
+                      className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
+                    />
+                  </div>
+                </div>
 
+                {/* 2. SKILL AREA & EXPERIENCE SECTION */}
+                <div className="space-y-6 pt-4 border-t border-slate-700/60">
+                  <h3 className="text-lg font-bold text-white border-b border-slate-700/60 pb-2">
+                    2. Professional Profile
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Core Skill Area</label>
                       <select 
@@ -276,12 +306,37 @@ export default function TalentRegistrationPage() {
                         className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all text-sm"
                       >
                         <option value="">Select Domain</option>
-                        <option value="frontend">Frontend Engineering</option>
-                        <option value="backend">Backend / Infrastructure</option>
-                        <option value="fullstack">Fullstack Development</option>
-                        <option value="uiux">UI/UX Product Design</option>
-                        <option value="pm">Product Management</option>
-                        <option value="mobile">Mobile Engineering</option>
+                        <option value="admin">Admin</option>
+                        <option value="hr">Human Resources</option>
+                        <option value="finance">Finance & Accounting</option>
+                        <option value="developers">Developers</option>
+                        <option value="data">Data/Database</option>
+                        <option value="itsupport">IT Support</option>
+                        <option value="automation">Automation & AI</option>
+                        <option value="graphic">Graphic Designers</option>
+                        <option value="video">Video Editors</option>
+                        <option value="pm">Project Managers</option>
+                        <option value="photography">Photography</option>
+                        <option value="socialmedia">Social Media</option>
+                        <option value="writers">Writers</option>
+                        <option value="telemarketers">Telemarketers</option>
+                        <option value="digitalmarketing">Digital Marketers</option>
+                        <option value="affiliate">Affiliate Marketers</option>
+                        <option value="uiux">UI/UX</option>
+                        <option value="devops">DevOps & Infrastructure</option>
+                        <option value="customerservice">Customer Service</option>
+                        <option value="virtualassistant">Virtual Assistant</option>
+                        <option value="businessdev">Business Developers</option>
+                        <option value="security">Tech Security</option>
+                        <option value="content">Content Creators</option>
+                        <option value="influencers">Influencers</option>
+                        <option value="ugc">UGC's & Vloggers</option>
+                        <option value="tiktok">Tiktokers</option>
+                        <option value="youtube">YouTubers</option>
+                        <option value="education">Coaches, Educators, Online Tutors, Authors & Trainers</option>
+                        <option value="techbusiness">Tech, Digital, Business & Finance Creators</option>
+                        <option value="lifestyle">Lifestyle, Entertainment, Travel, Food & Culture Creators</option>
+                        <option value="health">Health, Fitness & Wellness, Fashion, Beauty & Personal Branding Creators</option>
                       </select>
                     </div>
 
@@ -301,9 +356,15 @@ export default function TalentRegistrationPage() {
                       </select>
                     </div>
                   </div>
+                </div>
 
+                {/* 3. CV UPLOAD SECTION */}
+                <div className="space-y-6 pt-4 border-t border-slate-700/60">
+                  <h3 className="text-lg font-bold text-white border-b border-slate-700/60 pb-2">
+                    3. Resume Attachment
+                  </h3>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Attach Professional CV (PDF Only)</label>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Upload CV (PDF Format)</label>
                     <input 
                       type="file"
                       required
@@ -314,11 +375,11 @@ export default function TalentRegistrationPage() {
                   </div>
                 </div>
 
-                {/* 🧠 COGNITIVE & APTITUDE ASSESSMENT SUBSECTION */}
+                {/* 4. ASSESSMENT QUESTIONS SECTION */}
                 <div className="space-y-6 pt-4 border-t border-slate-700/60">
                   <div>
-                    <h3 className="text-lg font-bold text-white">2. Pipeline Aptitude Vetting</h3>
-                    <p className="text-xs text-slate-400 mt-1">Complete the ten logical and situational reasoning assessment tokens below.</p>
+                    <h3 className="text-lg font-bold text-white">4. Cognitive Assessment</h3>
+                    <p className="text-xs text-slate-400 mt-1">Please provide responses for all 10 validation questions below.</p>
                   </div>
 
                   <div className="space-y-6">
@@ -363,13 +424,13 @@ export default function TalentRegistrationPage() {
                   </div>
                 </div>
 
-                {/* SUBMIT BUTTON */}
+                {/* ACTION SUBMIT */}
                 <button 
                   type="submit"
                   disabled={isSubmitting}
                   className="w-full bg-[#008b9c] hover:bg-[#007a8a] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg hover:shadow-cyan-900/10 cursor-pointer"
                 >
-                  {isSubmitting ? "Uploading Pipeline Metadata..." : "Submit Registration Package 🚀"}
+                  {isSubmitting ? "Submitting Registration package..." : "Submit Talent Registration 🚀"}
                 </button>
 
               </form>
