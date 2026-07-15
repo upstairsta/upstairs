@@ -2,30 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../hdcomponents/navbar'; 
 import { supabase } from '../../../utils/supabase';
 
 export default function TalentRegistrationPage() {
+  const router = useRouter();
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [resumeFile, setResumeFile] = useState<File | null>(null); 
-  
-  // 🔒 Local states for the inline "Register/Login Guard"
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [guardEmail, setGuardEmail] = useState('');
-  const [guardPassword, setGuardPassword] = useState('');
-  const [guardFullName, setGuardFullName] = useState('');
-  const [guardError, setGuardError] = useState('');
-
-  // 🔒 Social Media Verification States (Only required for Sign Up)
-  const [hasVisitedInstagram, setHasVisitedInstagram] = useState(false);
-  const [hasVisitedLinkedIn, setHasVisitedLinkedIn] = useState(false);
-  const [hasVisitedX, setHasVisitedX] = useState(false);
-  const [hasVisitedFacebook, setHasVisitedFacebook] = useState(false);
-  const [socialConfirmChecked, setSocialConfirmChecked] = useState(false);
 
   // 📋 Assessment & Profile Fields
   const [formData, setFormData] = useState({
@@ -36,19 +23,38 @@ export default function TalentRegistrationPage() {
     q6: '', q7: '', q8: '', q9: '', q10: ''
   });
 
-  // Track active authentication status
+  // Check session on mount and handle redirects
   useEffect(() => {
+    let mounted = true;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAuthLoading(false);
+      if (mounted) {
+        if (!session) {
+          // ➔ If there is no active session, redirect them to register/login on the Apply page
+          router.push('/apply?role=talent&message=Please register or log in first to access this form.');
+        } else {
+          setSession(session);
+          setAuthLoading(false);
+        }
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      if (mounted) {
+        setSession(session);
+        if (!session) {
+          router.push('/apply?role=talent&message=Please sign in or register to complete your talent application.');
+        } else {
+          setAuthLoading(false);
+        }
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   const assessmentQuestions = [
     { 
@@ -110,73 +116,6 @@ export default function TalentRegistrationPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setResumeFile(e.target.files[0]);
-    }
-  };
-
-  // 🔒 Validation Check for Guard Signup Button
-  const isGuardFormValid = 
-    guardEmail.trim() !== '' &&
-    guardPassword.length >= 6 &&
-    guardFullName.trim() !== '' &&
-    hasVisitedInstagram &&
-    hasVisitedLinkedIn &&
-    hasVisitedX &&
-    hasVisitedFacebook &&
-    socialConfirmChecked;
-
-  // Handles security guard sign up
-  const handleGuardSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isGuardFormValid) {
-      setGuardError("Please complete all social verification checklist points.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setGuardError('');
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: guardEmail.trim(),
-        password: guardPassword,
-        options: {
-          data: {
-            full_name: guardFullName,
-            user_role: 'talent',
-            social_verified: true
-          }
-        }
-      });
-
-      if (error) throw error;
-      if (!data?.user) throw new Error("Could not construct auth credentials.");
-      
-      setSession(data.session);
-    } catch (err: any) {
-      setGuardError(err.message || 'Verification process failed.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Handles security guard login
-  const handleGuardLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setGuardError('');
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: guardEmail.trim(),
-        password: guardPassword,
-      });
-
-      if (error) throw error;
-      setSession(data.session);
-    } catch (err: any) {
-      setGuardError(err.message || 'Login credentials incorrect.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -265,10 +204,10 @@ export default function TalentRegistrationPage() {
 
           <div className="max-w-5xl mx-auto px-6 text-center mt-20 md:mt-28 animate-fadeIn">
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 drop-shadow-sm">
-              Talent Registration
+              Talent Application
             </h1>
             <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
-              Join the Upstairs Talent Pipeline network. Showcase your skills, upload your CV, and get matched with top employers.
+              Join the Upstairs Talent Pipeline network. Showcase your skills, upload your CV, and complete your alignment assessment.
             </p>
           </div>
         </div>
@@ -280,7 +219,7 @@ export default function TalentRegistrationPage() {
           
           <div className="bg-[#1e293b] border border-slate-800 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] overflow-hidden mt-6">
             
-            {/* Loading state before initial auth state returns */}
+            {/* Loading state before redirect or active session loads */}
             {authLoading ? (
               <div className="p-16 text-center text-slate-400">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#008b9c] mb-4"></div>
@@ -293,7 +232,7 @@ export default function TalentRegistrationPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-3">Registration Successful!</h2>
                 <p className="text-slate-400 mb-8 max-w-xl mx-auto text-sm leading-relaxed">
-                  Thank you for applying. Your pipeline workspace identity has been created and your application saved.
+                  Thank you for applying. Your pipeline application has been recorded.
                 </p>
                 <button 
                   onClick={() => setIsSubmitted(false)}
@@ -302,349 +241,144 @@ export default function TalentRegistrationPage() {
                   Submit another application
                 </button>
               </div>
-            ) : !session ? (
-              
-              /* ==================== SECURITY GUARD WORKSPACE ==================== */
-              <div className="p-8 md:p-12 max-w-md mx-auto animate-fadeIn">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-cyan-950/40 text-[#008b9c] mb-4">
-                    🔒
-                  </div>
-                  <h2 className="text-xl font-extrabold text-white">
-                    {isLoggingIn ? "Sign In to Your Workspace" : "Create an Account to Begin"}
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-1">
-                    You must be registered and authenticated to complete your application.
-                  </p>
-                </div>
-
-                {guardError && (
-                  <div className="mb-6 p-4 bg-red-950/40 border border-red-900 text-red-200 text-xs rounded-lg font-semibold">
-                    ⚠️ {guardError}
-                  </div>
-                )}
-
-                <form onSubmit={isLoggingIn ? handleGuardLogin : handleGuardSignUp} className="space-y-4">
-                  {!isLoggingIn && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Full Name</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={guardFullName}
-                        onChange={(e) => setGuardFullName(e.target.value)}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
-                        placeholder="Alex Johnson"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email Address</label>
-                    <input 
-                      type="email" 
-                      required
-                      value={guardEmail}
-                      onChange={(e) => setGuardEmail(e.target.value)}
-                      className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
-                      placeholder="name@example.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
-                    <input 
-                      type="password" 
-                      required
-                      minLength={6}
-                      value={guardPassword}
-                      onChange={(e) => setGuardPassword(e.target.value)}
-                      className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
-                      placeholder="••••••••"
-                    />
-                  </div>
-
-                  {/* 🔒 Social Verification Checklist (Only for registration) */}
-                  {!isLoggingIn && (
-                    <div className="bg-[#0f172a] border border-slate-800 p-4 rounded-xl space-y-3">
-                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                        <span>🔒</span> Social Verification Checklist
-                      </h4>
-                      <p className="text-[10px] text-slate-400 leading-normal">
-                        You must visit and follow us on all 4 platforms to unlock your registration.
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <a 
-                          href="https://www.instagram.com/upstairsofficial" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          onClick={() => setHasVisitedInstagram(true)}
-                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                            hasVisitedInstagram ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
-                          }`}
-                        >
-                          {hasVisitedInstagram ? '✓ Instagram' : '📸 Instagram'}
-                        </a>
-
-                        <a 
-                          href="https://www.linkedin.com" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          onClick={() => setHasVisitedLinkedIn(true)}
-                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                            hasVisitedLinkedIn ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
-                          }`}
-                        >
-                          {hasVisitedLinkedIn ? '✓ LinkedIn' : '💼 LinkedIn'}
-                        </a>
-
-                        <a 
-                          href="https://x.com" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          onClick={() => setHasVisitedX(true)}
-                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                            hasVisitedX ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
-                          }`}
-                        >
-                          {hasVisitedX ? '✓ X Profile' : '🐦 Follow X'}
-                        </a>
-
-                        <a 
-                          href="https://facebook.com" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          onClick={() => setHasVisitedFacebook(true)}
-                          className={`py-2 px-2 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                            hasVisitedFacebook ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#131f35] border-slate-700 text-slate-300 hover:bg-slate-800'
-                          }`}
-                        >
-                          {hasVisitedFacebook ? '✓ Facebook' : '👥 Facebook'}
-                        </a>
-                      </div>
-
-                      <label className="flex items-start gap-2 pt-2 border-t border-slate-800/80 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={socialConfirmChecked}
-                          onChange={(e) => setSocialConfirmChecked(e.target.checked)}
-                          className="mt-0.5 rounded text-[#008b9c] focus:ring-[#008b9c] bg-[#131f35] border-slate-700"
-                        />
-                        <span className="text-[10px] text-slate-400 leading-tight">
-                          I confirm I have followed all 4 platforms. Unfollowing later voids my onboarding entry.
-                        </span>
-                      </label>
-                    </div>
-                  )}
-
-                  <button 
-                    type="submit"
-                    disabled={isSubmitting || (!isLoggingIn && !isGuardFormValid)}
-                    className={`w-full text-white font-bold text-xs uppercase tracking-widest text-center py-3.5 px-8 transition-colors shadow-md rounded-lg disabled:opacity-60 disabled:cursor-not-allowed mt-2 ${
-                      isLoggingIn || isGuardFormValid 
-                        ? 'bg-[#008b9c] hover:bg-[#007a8a]' 
-                        : 'bg-slate-800 text-slate-500 border border-slate-700/60'
-                    }`}
-                  >
-                    {isSubmitting 
-                      ? 'Authenticating...' 
-                      : isLoggingIn 
-                        ? 'Unlock Form via Login ➡️' 
-                        : 'Register Secure Account & Unlock Form ➡️'
-                    }
-                  </button>
-                </form>
-
-                <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-                  <button 
-                    onClick={() => {
-                      setIsLoggingIn(!isLoggingIn);
-                      setGuardError('');
-                    }}
-                    className="text-[#008b9c] text-xs font-bold uppercase tracking-wider hover:text-[#00a3b8] transition-colors"
-                  >
-                    {isLoggingIn ? "Need an account? Sign Up" : "Already registered? Sign In"}
-                  </button>
-                </div>
-              </div>
             ) : (
               
-              /* ==================== SECURE TALENT FORM & APPLICATION ==================== */
-              <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10 animate-fadeIn">
+              /* ==================== ACTIVE FORM WORKSPACE ==================== */
+              <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-8 text-left text-slate-200">
                 
-                {/* Active user status tag */}
-                <div className="flex items-center justify-between p-3.5 bg-cyan-950/20 border border-cyan-900/50 rounded-xl">
-                  <div className="text-xs">
-                    <span className="text-slate-400 block">Logged in as:</span>
-                    <strong className="text-cyan-400">{session.user.email}</strong>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => supabase.auth.signOut()}
-                    className="text-xs text-red-400 font-bold hover:underline"
-                  >
-                    Logout
-                  </button>
-                </div>
-
-                {/* 1. PROFESSIONAL PROFILE */}
-                <section className="space-y-5">
-                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
-                    1. Professional Profile
+                {/* 📋 PROFILE DETAILED SUBSECTION */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-bold text-white border-b border-slate-700/60 pb-2">
+                    1. Professional Coordinates
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Primary Skill Area</label>
-                      <select 
-                        name="skillArea"
-                        value={formData.skillArea}
-                        required
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all duration-300 disabled:opacity-50 text-sm"
-                      >
-                        <option value="" className="text-slate-500">Select a skill...</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Human Resources">Human Resources</option>
-                        <option value="Finance & Accounting">Finance & Accounting</option>
-                        <option value="Developers">Developers</option>
-                        <option value="Data/Database">Data/Database</option>
-                        <option value="IT Support">IT Support</option>
-                        <option value="Automation & AI">Automation & AI</option>
-                        <option value="Graphic designers">Graphic designers</option>
-                        <option value="Video Editors">Video Editors</option>
-                        <option value="Project Managers">Project Managers</option>
-                        <option value="Photography">Photography</option>
-                        <option value="Social Media">Social Media</option>
-                        <option value="Writers">Writers</option>
-                        <option value="Telemarketers">Telemarketers</option>
-                        <option value="DevOps & Infrastructure">DevOps & Infrastructure</option>
-                        <option value="UI/UX">UI/UX</option>
-                        <option value="Digital marketers">Digital marketers</option>
-                        <option value="Affiliate Marketers">Affiliate Marketers</option>
-                        <option value="Customer service">Customer service</option>
-                        <option value="Virtual Assistant">Virtual Assistant</option>
-                        <option value="Business Developers">Business Developers</option>
-                        <option value="Tech Security">Tech Security</option>
-                        <option value="Content Creators">Content Creators</option>
-                        <option value="Influencers">Influencers</option>
-                        <option value="UGC's & Vloggers">UGC's & Vloggers</option>
-                        <option value="Tiktokers">Tiktokers</option>
-                        <option value="YouTubers">YouTubers</option>
-                        <option value="Tech, Digital, Business & Finance creators">Tech, Digital, Business & Finance creators</option>
-                        <option value="Lifestyle, Entertainment, Travel, Food & Culture creators">Lifestyle, Entertainment, Travel, Food & Culture creators</option>
-                        <option value="Coaches, Educators, online courses, online tutors, Authors & Trainers">Coaches, Educators, online courses, online tutors, Authors & Trainers</option>
-                        <option value="Health, Fitness & Wellness, Fashion, Beauty & Personal Branding Creators">Health, Fitness & Wellness, Fashion, Beauty & Personal Branding Creators</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Years of Experience</label>
-                      <select 
-                        name="experience"
-                        value={formData.experience}
-                        required
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all duration-300 disabled:opacity-50 text-sm"
-                      >
-                        <option value="" className="text-slate-500">Select experience...</option>
-                        <option value="Entry Level (0-1 years)">Entry Level (0-1 years)</option>
-                        <option value="Mid Level (2-4 years)">Mid Level (2-4 years)</option>
-                        <option value="Senior Level (5+ years)">Senior Level (5+ years)</option>
-                      </select>
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone Number</label>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Phone Number</label>
                       <input 
-                        type="tel" 
+                        type="tel"
                         name="phone"
-                        value={formData.phone}
                         required
+                        value={formData.phone}
                         onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 font-medium rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all duration-300 disabled:opacity-50 text-sm"
-                        placeholder="+234 ..."
+                        placeholder="+234..."
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none placeholder-slate-500 transition-all text-sm"
                       />
                     </div>
-                  </div>
-                </section>
 
-                {/* 2. RESUME / CV */}
-                <section className="space-y-5">
-                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
-                    2. Resume / CV
-                  </h3>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Core Skill Area</label>
+                      <select 
+                        name="skillArea"
+                        required
+                        value={formData.skillArea}
+                        onChange={handleChange}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all text-sm"
+                      >
+                        <option value="">Select Domain</option>
+                        <option value="frontend">Frontend Engineering</option>
+                        <option value="backend">Backend / Infrastructure</option>
+                        <option value="fullstack">Fullstack Development</option>
+                        <option value="uiux">UI/UX Product Design</option>
+                        <option value="pm">Product Management</option>
+                        <option value="mobile">Mobile Engineering</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Years of Experience</label>
+                      <select 
+                        name="experience"
+                        required
+                        value={formData.experience}
+                        onChange={handleChange}
+                        className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none transition-all text-sm"
+                      >
+                        <option value="">Select Range</option>
+                        <option value="junior">0 - 2 Years</option>
+                        <option value="mid">2 - 5 Years</option>
+                        <option value="senior">5+ Years</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Upload your CV (PDF or DOCX)</label>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Attach Professional CV (PDF Only)</label>
                     <input 
-                      type="file" 
-                      accept=".pdf,.doc,.docx"
+                      type="file"
                       required
+                      accept=".pdf"
                       onChange={handleFileChange}
-                      disabled={isSubmitting}
-                      className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-cyan-950/60 file:text-[#008b9c] hover:file:bg-cyan-900/60 cursor-pointer p-2 bg-[#0f172a] border border-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                      className="w-full bg-[#0f172a] border border-slate-700 text-slate-100 rounded-lg p-3 focus:ring-2 focus:ring-[#008b9c] focus:border-[#008b9c] focus:outline-none text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-950/40 file:text-[#008b9c] hover:file:bg-cyan-900/50"
                     />
                   </div>
-                </section>
+                </div>
 
-                {/* 3. MULTIPLE CHOICE ASSESSMENT */}
-                <section className="space-y-5">
-                  <h3 className="text-base font-bold text-slate-200 uppercase tracking-wider border-b border-slate-700/50 pb-2.5">
-                    3. Assessment Questions
-                  </h3>
-                  <p className="text-xs text-slate-400 font-normal leading-relaxed -mt-2">Please answer the following 10 questions. All fields are required.</p>
-                  
-                  <div className="space-y-4">
-                    {assessmentQuestions.map((q, index) => (
-                      <div key={q.id} className="p-5 bg-[#131f35] border border-slate-700/70 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
-                        <h4 className="text-[#008b9c] font-bold text-xs uppercase tracking-wider mb-2">
-                          Question {index + 1}: {q.category}
-                        </h4>
-                        <p className="text-slate-100 text-sm font-medium mb-4 whitespace-pre-line leading-relaxed">
-                          {q.text}
-                        </p>
-                        <div className="space-y-2.5 pl-1">
-                          {q.options.map((option, i) => (
-                            <label key={i} className="flex items-start space-x-3 cursor-pointer group">
-                              <input 
-                                type="radio" 
-                                name={q.id} 
-                                value={option} 
-                                checked={formData[q.id as keyof typeof formData] === option}
-                                required
-                                onChange={handleChange}
-                                disabled={isSubmitting}
-                                className="mt-0.5 w-4 h-4 text-[#008b9c] bg-[#0f172a] border-slate-600 focus:ring-[#008b9c] focus:ring-offset-[#131f35] disabled:opacity-50"
-                              />
-                              <span className="text-xs font-semibold text-slate-400 group-hover:text-white transition-colors">
-                                {option}
-                              </span>
-                            </label>
-                          ))}
+                {/* 🧠 COGNITIVE & APTITUDE ASSESSMENT SUBSECTION */}
+                <div className="space-y-6 pt-4 border-t border-slate-700/60">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">2. Pipeline Aptitude Vetting</h3>
+                    <p className="text-xs text-slate-400 mt-1">Complete the ten logical and situational reasoning assessment tokens below.</p>
+                  </div>
+
+                  <div className="space-y-6">
+                    {assessmentQuestions.map((q, idx) => (
+                      <div key={q.id} className="bg-[#0f172a]/60 border border-slate-800 p-5 rounded-xl space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <span className="text-[10px] font-bold text-[#008b9c] uppercase tracking-wider bg-cyan-950/45 px-2 py-0.5 rounded">
+                            {q.category}
+                          </span>
+                          <span className="text-xs font-bold text-slate-500">Q{idx + 1}/10</span>
+                        </div>
+                        <p className="text-sm font-semibold text-white whitespace-pre-line">{q.text}</p>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+                          {q.options.map((opt) => {
+                            const isChecked = (formData as any)[q.id] === opt;
+                            return (
+                              <label 
+                                key={opt} 
+                                className={`flex items-center gap-3 p-3 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
+                                  isChecked 
+                                    ? 'bg-[#008b9c]/10 border-[#008b9c] text-white' 
+                                    : 'bg-[#0f172a] border-slate-700/60 text-slate-300 hover:border-slate-600'
+                                }`}
+                              >
+                                <input 
+                                  type="radio"
+                                  name={q.id}
+                                  required
+                                  value={opt}
+                                  checked={isChecked}
+                                  onChange={handleChange}
+                                  className="text-[#008b9c] focus:ring-[#008b9c] bg-slate-900 border-slate-700"
+                                />
+                                {opt}
+                              </label>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
                   </div>
-                </section>
+                </div>
 
                 {/* SUBMIT BUTTON */}
-                <div className="pt-2">
-                  <button 
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-[#008b9c] hover:bg-[#007a8a] text-white font-bold text-xs uppercase tracking-widest text-center py-4 px-8 transition-colors shadow-md rounded-lg disabled:opacity-60 disabled:cursor-wait"
-                  >
-                    {isSubmitting ? 'Uploading & Processing Verification...' : 'Submit Registration & Assessment'}
-                  </button>
-                </div>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#008b9c] hover:bg-[#007a8a] text-white font-bold text-xs uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg hover:shadow-cyan-900/10 cursor-pointer"
+                >
+                  {isSubmitting ? "Uploading Pipeline Metadata..." : "Submit Registration Package 🚀"}
+                </button>
 
               </form>
             )}
+
           </div>
         </main>
       </div>
-      
+
     </div>
   );
 }

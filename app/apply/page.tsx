@@ -85,7 +85,7 @@ function ApplyForm() {
 
         alert("Registration successful! Proceeding to your secure workspace.");
         
-        // ✅ CORRECTED: Route matches your newly renamed hyphenated dashboard routes
+        // ✅ Route matches your newly renamed hyphenated dashboard routes
         router.push(`/workspace/${role}-dashboard`);
 
       } else {
@@ -109,7 +109,7 @@ function ApplyForm() {
             throw new Error("Unable to retrieve your designated portal role.");
           }
 
-          // ✅ CORRECTED: Route matches your newly renamed hyphenated dashboard routes
+          // ✅ Route matches your newly renamed hyphenated dashboard routes
           router.push(`/workspace/${profile.role}-dashboard`);
         }
       }
@@ -213,6 +213,7 @@ function ApplyForm() {
               </div>
             )}
 
+            {/* EMAIL */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Email Address</label>
               <input 
@@ -225,6 +226,7 @@ function ApplyForm() {
               />
             </div>
 
+            {/* PASSWORD */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Password</label>
               <input 
@@ -342,7 +344,6 @@ function ApplyForm() {
             <p className="text-xs text-center font-medium text-slate-400">Need a pipeline account? Choose your path:</p>
             <div className="grid grid-cols-2 gap-2.5">
               
-              {/* ✅ CORRECTED: Linking directly to the respective sign-up pages */}
               <Link 
                 href="/apply/talent"
                 className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
@@ -350,7 +351,6 @@ function ApplyForm() {
                 <span>🚀</span> Talent
               </Link>
               
-              {/* ✅ CORRECTED: Linking directly to the respective sign-up pages */}
               <Link 
                 href="/apply/employer"
                 className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
@@ -448,7 +448,6 @@ export default function ApplyPage() {
                 </p>
               </div>
 
-              {/* ✅ CORRECTED: Pointing workspace link to the new hyphenated talent path */}
               <Link 
                 href="/workspace/talent-dashboard"
                 className="w-full block text-center bg-[#218c53] hover:bg-[#1b7545] text-white font-bold text-xs tracking-widest uppercase py-4 px-6 rounded-lg transition-colors shadow-md"
