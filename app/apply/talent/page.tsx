@@ -42,7 +42,7 @@ export default function TalentRegistrationPage() {
       if (mounted) {
         setSession(session);
         if (!session) {
-          router.push('/apply?role=talent&message=Please sign in or register to complete your talent application.');
+          router.push('/apply?role=talent&message=Please register or log in first to access this form.');
         } else {
           setAuthLoading(false);
         }
