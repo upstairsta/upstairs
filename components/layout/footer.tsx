@@ -35,11 +35,10 @@ export default function Footer() {
         </div>
 
         <div>
-          <h3 className="font-bold text-lg mb-5 text-white">Account</h3>
+          <h3 className="font-bold text-lg mb-5 text-white">Apply</h3>
           <ul className="space-y-3 text-sm text-slate-400">
-            <li><Link href="/login" className="hover:text-brand-teal transition-colors duration-300">Sign In</Link></li>
-            <li><Link href="/signup" className="hover:text-brand-teal transition-colors duration-300">Sign Up</Link></li>
-            <li><Link href="/signout" className="hover:text-brand-teal transition-colors duration-300">Sign Out</Link></li>
+            <li><Link href="/apply?mode=login" className="hover:text-brand-teal transition-colors duration-300">Sign In</Link></li>
+            <li><Link href="/apply?mode=signup" className="hover:text-brand-teal transition-colors duration-300">Sign Up</Link></li>
             <li><Link href="/apply" className="hover:text-brand-teal transition-colors duration-300">Apply Portal</Link></li>
           </ul>
 

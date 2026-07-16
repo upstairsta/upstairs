@@ -69,10 +69,18 @@ function ApplyForm() {
 
     checkActiveSession();
 
+    const urlMode = searchParams.get('mode');
     const urlRole = searchParams.get('role');
+
+    if (urlMode === 'signup') {
+      setIsRegisterMode(true);
+    } else if (urlMode === 'login') {
+      setIsRegisterMode(false);
+    }
+
     if (urlRole === 'employer' || urlRole === 'talent') {
       setRole(urlRole);
-      setIsRegisterMode(true); // Auto-open register mode if arriving from a specific CTA
+      setIsRegisterMode(true);
     }
 
     const message = searchParams.get('message');
@@ -175,10 +183,12 @@ function ApplyForm() {
       {/* LEFT COLUMN: Brand Value Statement */}
       <div className="lg:col-span-7 text-left space-y-12">
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight drop-shadow-sm">
-          {isRegisterMode ? "Registration Portal" : "Registration Portal"}
+          {userSession ? "Your Portal" : isRegisterMode ? "Create Your Account" : "Sign In to Apply"}
         </h1>
         <p className="text-base md:text-lg text-slate-300 font-light leading-relaxed max-w-xl">
-          Empowering tech talent and high-growth startup frameworks through rigorous operational opportunity. Log in to your profile workspace below to finalize registration or continue vetting pipelines.
+          {isRegisterMode
+            ? "Join the Upstairs Talent Pipeline. Create your account below to start your application as tech talent or a hiring partner."
+            : "Already registered? Sign in below to access your workspace, continue your application, or manage your profile."}
         </p>
         <div className="hidden sm:block border-l-2 border-[#008b9c]/30 pl-4 py-1 text-xs text-slate-400 italic max-w-md">
           "If you are seeking access to internal engineering workspaces, resource syllabi modules, or partner track logs, authenticate your token secure layout session."
@@ -188,25 +198,45 @@ function ApplyForm() {
       {/* RIGHT COLUMN: Embedded Account Authorization Card */}
       <div className="lg:col-span-5 w-full">
         <div className="bg-slate-900/70 border border-slate-700/50 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
-          <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-            <h3 className="text-lg font-bold text-white tracking-tight">
-              {userSession ? "Active Session" : (isRegisterMode ? "Setup Account" : "Account Authentication")}
-            </h3>
-            
-            {/* Mode Selector Toggle Switch (Hidden if session is active) */}
-            {!userSession && (
-              <button 
+          {!userSession && !sessionLoading && (
+            <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-700/80">
+              <button
                 type="button"
                 onClick={() => {
-                  setIsRegisterMode(!isRegisterMode);
+                  setIsRegisterMode(false);
                   setErrorMessage(null);
                   setLogoutStatus(null);
                 }}
-                className="text-[11px] font-bold text-[#008b9c] hover:text-cyan-400 uppercase tracking-widest bg-cyan-950/40 border border-cyan-800/40 px-2.5 py-1 rounded-md"
+                className={`py-2.5 rounded-lg text-sm font-bold transition-all ${
+                  !isRegisterMode
+                    ? 'bg-[#008b9c] text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                {isRegisterMode ? "➔ Switch to Login" : "➔ Create Account"}
+                Sign In
               </button>
-            )}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(true);
+                  setErrorMessage(null);
+                  setLogoutStatus(null);
+                }}
+                className={`py-2.5 rounded-lg text-sm font-bold transition-all ${
+                  isRegisterMode
+                    ? 'bg-[#008b9c] text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+            <h3 className="text-lg font-bold text-white tracking-tight">
+              {userSession ? "Active Session" : isRegisterMode ? "Create Account" : "Sign In"}
+            </h3>
           </div>
 
           {/* Inline Alert Notification block */}
@@ -432,10 +462,10 @@ function ApplyForm() {
                   }`}
                 >
                   {authLoading 
-                    ? "Authorizing Profile..." 
+                    ? "Please wait..." 
                     : isRegisterMode 
-                      ? "Register Secure Account ➡️" 
-                      : "Secure Login ➡️"
+                      ? "Sign Up" 
+                      : "Sign In"
                   }
                 </button>
               </form>

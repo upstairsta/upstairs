@@ -115,7 +115,7 @@ export default function EmployerRegistrationPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Link 
-                    href="/login"
+                    href="/apply?mode=login"
                     className="bg-[#218c53] hover:bg-[#1b7545] text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition-colors"
                   >
                     Go to Identity Validation
@@ -291,7 +291,7 @@ export default function EmployerRegistrationPage() {
 
                   <div className="text-center text-xs text-slate-400">
                     Already registered?{' '}
-                    <Link href="/login" className="text-[#28ab65] font-bold hover:underline">
+                    <Link href="/apply?mode=login" className="text-[#28ab65] font-bold hover:underline">
                       Sign in here
                     </Link>
                   </div>

@@ -46,11 +46,13 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute =
     pathname === '/login' ||
     pathname === '/signup' ||
-    pathname === '/register';
+    pathname === '/register' ||
+    (pathname === '/apply' && request.nextUrl.searchParams.get('mode') !== null);
 
   if (!user && isGuardedRoute) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/login';
+    redirectUrl.pathname = '/apply';
+    redirectUrl.searchParams.set('mode', 'login');
     redirectUrl.searchParams.set('message', 'Please sign in first to access your portal.');
     return NextResponse.redirect(redirectUrl);
   }

@@ -16,7 +16,7 @@ export default function SignOutPage() {
       try {
         await signOut();
         setStatus('signed-out');
-        setTimeout(() => router.replace('/login?message=You have been signed out successfully.'), 2000);
+        setTimeout(() => router.replace('/apply?mode=login&message=You have been signed out successfully.'), 2000);
       } catch (err: unknown) {
         setStatus('error');
         setErrorMessage(err instanceof Error ? err.message : 'Sign out failed.');
@@ -47,7 +47,7 @@ export default function SignOutPage() {
               </div>
               <h1 className="text-xl font-bold text-white mb-2">Signed Out</h1>
               <p className="text-sm text-slate-400 mb-6">Your session has been cleared. Redirecting to sign in...</p>
-              <Link href="/login" className="text-brand-teal hover:underline text-sm font-semibold">
+              <Link href="/apply?mode=login" className="text-brand-teal hover:underline text-sm font-semibold">
                 Go to Sign In now
               </Link>
             </>

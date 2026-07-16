@@ -20,7 +20,7 @@ export default function EmployerDashboard() {
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error || !session) {
-        router.push('/login?message=Please sign in first to access your workspace.');
+        router.push('/apply?mode=login&message=Please sign in first to access your workspace.');
         return;
       }
 
