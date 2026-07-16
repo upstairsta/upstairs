@@ -469,18 +469,6 @@ function ApplyForm() {
                   }
                 </button>
               </form>
-
-              {/* 🔴 ALWAYS-VISIBLE SECURE OUT BUTTON (For cleanup) */}
-              <div className="pt-2 border-t border-slate-800/60">
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={authLoading}
-                  className="w-full bg-slate-950/40 hover:bg-rose-950/15 border border-slate-800/80 hover:border-rose-900/40 text-slate-400 hover:text-rose-400 text-[10px] font-bold uppercase tracking-widest py-2 rounded-md transition-all flex items-center justify-center gap-1.5"
-                >
-                  {authLoading ? "Signing out..." : "⚠️ Force Clear Session (Sign Out)"}
-                </button>
-              </div>
             </div>
           )}
 
