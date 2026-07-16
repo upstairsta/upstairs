@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Navbar from '../hdcomponents/navbar';  
-import { supabase } from '../../utils/supabase';
+import Navbar from '@/components/layout/navbar';  
+import { supabase } from '@/utils/supabase';
 
 interface JobRow {
   id: number;

@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Navbar from '../../hdcomponents/navbar'; 
-import { supabase } from '../../../utils/supabase';
+import Navbar from '@/components/layout/navbar';
+import { supabase } from '@/utils/supabase';
 
 export default function TalentRegistrationPage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function TalentRegistrationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [resumeFile, setResumeFile] = useState<File | null>(null); 
 
-  // 📋 Profile & Assessment Fields (All Criteria Handled)
+  // 📋 Profile & Assessment Fields
   const [formData, setFormData] = useState({
     phone: '',
     skillArea: '',
@@ -23,14 +23,16 @@ export default function TalentRegistrationPage() {
     q6: '', q7: '', q8: '', q9: '', q10: ''
   });
 
-  // Check session on mount and handle redirects if not logged in
+  // Check session on mount and handle automatic redirects if not logged in
   useEffect(() => {
     let mounted = true;
 
+    // 1. Check current session state immediately
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (mounted) {
         if (!session) {
-          router.push('/apply?role=talent&message=Please sign in or register to complete your talent application.');
+          // No active session? Instantly redirect to the registration portal
+          router.replace('/apply?role=talent');
         } else {
           setSession(session);
           setAuthLoading(false);
@@ -38,12 +40,13 @@ export default function TalentRegistrationPage() {
       }
     });
 
+    // 2. Listen to real-time auth changes (e.g., if they sign out)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {
-        setSession(session);
         if (!session) {
-          router.push('/apply?role=talent&message=Please register or log in first to access this form.');
+          router.replace('/apply?role=talent');
         } else {
+          setSession(session);
           setAuthLoading(false);
         }
       }
@@ -128,7 +131,7 @@ export default function TalentRegistrationPage() {
     setIsSubmitting(true);
 
     try {
-      // 🛡️ IMPLEMENTATION: Ensure user metadata explicitly holds 'talent' role
+      // Ensure user metadata explicitly holds 'talent' role
       if (session.user.user_metadata?.role !== 'talent') {
         const { error: updateError } = await supabase.auth.updateUser({
           data: { role: 'talent' }
@@ -157,7 +160,7 @@ export default function TalentRegistrationPage() {
         uploadedResumeUrl = urlData.publicUrl;
       }
 
-      // Insert all application details matching registration criteria
+      // Insert application details matching registration criteria
       const { error: insertError } = await supabase
         .from('talents')
         .insert([

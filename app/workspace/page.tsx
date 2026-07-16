@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation'; // 1. IMPORT THE NEXT ROUTER
-import Navbar from '../hdcomponents/navbar'; 
-import { supabase } from '../../utils/supabase';
+import Navbar from '@/components/layout/navbar'; 
+import { supabase } from '@/utils/supabase';
 
 interface Task {
   id: number;

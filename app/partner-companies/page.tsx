@@ -2,8 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import Navbar from '../hdcomponents/navbar'; 
-import Footer from '../ftcomponents/footer'; 
+import Navbar from '@/components/layout/navbar'; 
 
 const PARTNERS = [
   { name: "Vanguard Tech Group", tier: "Enterprise Hiring Network", industry: "Cloud Logistics", slots: 8 },

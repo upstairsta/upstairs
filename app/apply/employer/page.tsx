@@ -3,21 +3,21 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Navbar from '../../hdcomponents/navbar'; 
-import { supabase } from '../../../utils/supabase';
+import Navbar from '@/components/layout/navbar'; // Absolute alias to prevent route breakdown
+import { supabase } from '@/utils/supabase';     // Standard absolute path
 
 export default function EmployerRegistrationPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // 1. Session Check: Redirect logged-in users away from registration
+  // 1. Session Check: Route active sessions correctly instead of causing home screen bouncing loops
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Redirect to a protected route (e.g., dashboard)
-        router.push('/employer/dashboard'); 
+        // Safe landing pad: Authenticated employers go straight to dashboard workspace
+        router.push('/workspace/employer-dashboard'); 
       } else {
         setIsCheckingAuth(false);
       }
@@ -87,7 +87,16 @@ export default function EmployerRegistrationPage() {
       router.push('/workspace/employer-dashboard');
 
     } catch (err: any) {
-      alert(`Registration Framework Failed: ${err.message || 'Something went wrong'}`);
+      // 🛑 Enhanced Error Inspector: Prints deep error details to your browser console
+      console.error("Full Debug Registration Error:", err);
+
+      // Safe fallback extraction to resolve the empty "{}" string formatting issue
+      const detailedMessage = 
+        err?.message || 
+        (err && typeof err === 'object' ? JSON.stringify(err) : String(err)) || 
+        'Something went wrong';
+
+      alert(`Registration Framework Failed: ${detailedMessage}`);
       setIsSubmitting(false); // Only set to false on error so they can retry
     }
   };

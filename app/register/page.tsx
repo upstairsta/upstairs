@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Navbar from '../hdcomponents/navbar'; 
-import Footer from '../ftcomponents/footer';
-import { supabase } from '../../utils/supabase';
+import Navbar from '@/components/layout/navbar'; 
+import { supabase } from '@/utils/supabase';
 
 export default function EmployerRegistrationPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -41,7 +40,8 @@ export default function EmployerRegistrationPage() {
           data: {
             company_name: formData.companyName,
             contact_name: formData.contactName,
-            user_role: 'employer', // Tells the database trigger to populate the employers table
+            full_name: formData.contactName,
+            role: 'employer',
             phone: formData.phone,
             industry: formData.industry,
             roles_needed: formData.rolesNeeded,
@@ -115,7 +115,7 @@ export default function EmployerRegistrationPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Link 
-                    href="/login" 
+                    href="/login"
                     className="bg-[#218c53] hover:bg-[#1b7545] text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition-colors"
                   >
                     Go to Identity Validation
@@ -292,7 +292,7 @@ export default function EmployerRegistrationPage() {
                   <div className="text-center text-xs text-slate-400">
                     Already registered?{' '}
                     <Link href="/login" className="text-[#28ab65] font-bold hover:underline">
-                      Log in here
+                      Sign in here
                     </Link>
                   </div>
                 </div>
@@ -303,7 +303,6 @@ export default function EmployerRegistrationPage() {
           </div>
         </main>
       </div>
-      <Footer />
     </div>
   );
 }

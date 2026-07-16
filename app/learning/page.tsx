@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Navbar from '../hdcomponents/navbar'; 
-import { supabase } from '../../utils/supabase';
+import Navbar from '@/components/layout/navbar'; 
+import { supabase } from '@/utils/supabase';
 
 // Pulling the updated tracks array out of your data file
 import { initialCourses, Course } from '../data/coursesData';

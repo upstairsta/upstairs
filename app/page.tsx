@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from './hdcomponents/navbar';
+import Navbar from '@/components/layout/navbar';
 
 export default function HomePage() {
   return (

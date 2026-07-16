@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Navbar from '../hdcomponents/navbar'; 
-import Footer from '../ftcomponents/footer'; 
-import { supabase } from '../../utils/supabase';
+import Navbar from '@/components/layout/navbar'; 
+import { supabase } from '@/utils/supabase';
 
 interface CertificateRow {
   id: string;
@@ -185,8 +184,7 @@ export default function CertificationEnginePage() {
       </main>
 
       <div className="print:hidden">
-        <Footer />
-      </div>
+              </div>
     </div>
   );
 }

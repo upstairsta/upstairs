@@ -55,7 +55,7 @@ export default function AdminDashboard() {
     } catch (err: any) {
       alert(`Error loading data from database: ${err.message}`);
     } finally {
-      loading: setLoading(false);
+      setLoading(false);
     }
   };
 

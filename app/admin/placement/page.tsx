@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link'; // Imported Link for dashboard routing
-import Navbar from '../../hdcomponents/navbar'; // Adjust path if needed
+import Navbar from '@/components/layout/navbar'; // Adjust path if needed
 
 // --- INITIAL DUMMY COHORT DATA ---
 const INITIAL_CANDIDATES = [

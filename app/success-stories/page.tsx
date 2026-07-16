@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import Navbar from '../hdcomponents/navbar'; 
+import Navbar from '@/components/layout/navbar'; 
 
 const STORIES = [
   {
@@ -123,7 +123,7 @@ export default function SuccessStoriesPage() {
           </p>
           <div className="pt-2">
             <Link 
-              href="/apply/workspace/talent" 
+              href="/apply/talent" 
               className="inline-block bg-[#008b9c] hover:bg-[#007685] text-white font-bold text-xs uppercase tracking-wider px-8 py-3.5 rounded-xl transition-all shadow-sm whitespace-nowrap active:scale-98"
             >
               Start Your Application Route

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Footer from "./ftcomponents/footer"; // Adjust this path if your folder layout is different
+import Footer from "@/components/layout/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,8 +37,7 @@ export default function RootLayout({
         </div>
 
         {/* This renders your transparent footer cleanly at the very bottom of the app */}
-        <Footer />
-        
+                
       </body>
     </html>
   );

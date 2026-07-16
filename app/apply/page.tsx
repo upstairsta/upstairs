@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Navbar from '../hdcomponents/navbar';
-import { supabase } from '../../utils/supabase'; // Adjust path based on your setup
+import Navbar from '@/components/layout/navbar';
+import { supabase } from '@/utils/supabase';
+import { getRoleRedirectPath, signOut } from '@/lib/auth';
 
 function ApplyForm() {
   const router = useRouter();
@@ -15,6 +16,11 @@ function ApplyForm() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   
+  // ⚙️ Active Session State
+  const [userSession, setUserSession] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+
   // ⚙️ Role State: 'talent' or 'employer'
   const [role, setRole] = useState<'talent' | 'employer'>('talent');
   
@@ -30,9 +36,39 @@ function ApplyForm() {
 
   const [authLoading, setAuthLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [logoutStatus, setLogoutStatus] = useState<string | null>(null);
 
-  // 🚨 Pre-select role and handle redirect warnings
+  // 🚨 Fetch active session & configure url params on mount
   useEffect(() => {
+    async function checkActiveSession() {
+      setSessionLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          setUserSession(session);
+          // Retrieve user's role profile dynamically
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          if (profile) {
+            setUserRole(profile.role);
+          }
+        } else {
+          setUserSession(null);
+          setUserRole(null);
+        }
+      } catch (err) {
+        console.error("Session fetch failure", err);
+      } finally {
+        setSessionLoading(false);
+      }
+    }
+
+    checkActiveSession();
+
     const urlRole = searchParams.get('role');
     if (urlRole === 'employer' || urlRole === 'talent') {
       setRole(urlRole);
@@ -44,6 +80,23 @@ function ApplyForm() {
       setErrorMessage(message);
     }
   }, [searchParams]);
+
+  // 🔴 Force Sign Out Action
+  const handleLogout = async () => {
+    setAuthLoading(true);
+    setErrorMessage(null);
+    setLogoutStatus(null);
+    try {
+      await signOut();
+      setUserSession(null);
+      setUserRole(null);
+      setLogoutStatus("Your active session was safely terminated.");
+    } catch (err: any) {
+      setErrorMessage(err.message || "Signout execution failed.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   // Validation logic (All social actions required)
   const isRegisterFormValid = 
@@ -60,6 +113,7 @@ function ApplyForm() {
     e.preventDefault();
     setAuthLoading(true);
     setErrorMessage(null);
+    setLogoutStatus(null);
     
     try {
       if (isRegisterMode) {
@@ -68,7 +122,6 @@ function ApplyForm() {
           throw new Error("Please follow all our social media handles to proceed.");
         }
 
-        // We pass name and role in 'options.data'. Our DB trigger will capture this!
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password: password,
@@ -84,9 +137,7 @@ function ApplyForm() {
         if (error) throw error;
 
         alert("Registration successful! Proceeding to your secure workspace.");
-        
-        // ✅ Route matches your newly renamed hyphenated dashboard routes
-        router.push(`/workspace/${role}-dashboard`);
+        router.push(getRoleRedirectPath(role));
 
       } else {
         // --- 2. LOGIN PATH ---
@@ -98,7 +149,6 @@ function ApplyForm() {
         if (authError) throw authError;
 
         if (authData.user) {
-          // Look up user's profile to retrieve their role
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('role')
@@ -109,8 +159,7 @@ function ApplyForm() {
             throw new Error("Unable to retrieve your designated portal role.");
           }
 
-          // ✅ Route matches your newly renamed hyphenated dashboard routes
-          router.push(`/workspace/${profile.role}-dashboard`);
+          router.push(getRoleRedirectPath(profile.role));
         }
       }
     } catch (err: any) {
@@ -126,7 +175,7 @@ function ApplyForm() {
       {/* LEFT COLUMN: Brand Value Statement */}
       <div className="lg:col-span-7 text-left space-y-12">
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight drop-shadow-sm">
-          {isRegisterMode ? "Create Profile" : "Registration Portal"}
+          {isRegisterMode ? "Registration Portal" : "Registration Portal"}
         </h1>
         <p className="text-base md:text-lg text-slate-300 font-light leading-relaxed max-w-xl">
           Empowering tech talent and high-growth startup frameworks through rigorous operational opportunity. Log in to your profile workspace below to finalize registration or continue vetting pipelines.
@@ -141,20 +190,23 @@ function ApplyForm() {
         <div className="bg-slate-900/70 border border-slate-700/50 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
           <div className="flex justify-between items-center pb-2 border-b border-slate-800">
             <h3 className="text-lg font-bold text-white tracking-tight">
-              {isRegisterMode ? "Setup Account" : "Account Authentication"}
+              {userSession ? "Active Session" : (isRegisterMode ? "Setup Account" : "Account Authentication")}
             </h3>
             
-            {/* Mode Selector Toggle Switch */}
-            <button 
-              type="button"
-              onClick={() => {
-                setIsRegisterMode(!isRegisterMode);
-                setErrorMessage(null);
-              }}
-              className="text-[11px] font-bold text-[#008b9c] hover:text-cyan-400 uppercase tracking-widest bg-cyan-950/40 border border-cyan-800/40 px-2.5 py-1 rounded-md"
-            >
-              {isRegisterMode ? "➔ Switch to Login" : "➔ Create Account"}
-            </button>
+            {/* Mode Selector Toggle Switch (Hidden if session is active) */}
+            {!userSession && (
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(!isRegisterMode);
+                  setErrorMessage(null);
+                  setLogoutStatus(null);
+                }}
+                className="text-[11px] font-bold text-[#008b9c] hover:text-cyan-400 uppercase tracking-widest bg-cyan-950/40 border border-cyan-800/40 px-2.5 py-1 rounded-md"
+              >
+                {isRegisterMode ? "➔ Switch to Login" : "➔ Create Account"}
+              </button>
+            )}
           </div>
 
           {/* Inline Alert Notification block */}
@@ -164,201 +216,266 @@ function ApplyForm() {
             </div>
           )}
 
-          {/* Authentication Form UI */}
-          <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
-            
-            {/* 👥 ROLE SELECTOR: Only visible during registration mode */}
-            {isRegisterMode && (
-              <div className="animate-fadeIn">
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">My Profile Type</label>
-                <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-700/80">
-                  <button
-                    type="button"
-                    onClick={() => setRole('talent')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${
-                      role === 'talent'
-                        ? 'bg-[#008b9c] text-white shadow'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    🚀 Tech Talent
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('employer')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${
-                      role === 'employer'
-                        ? 'bg-[#008b9c] text-white shadow'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    🏢 Employer
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* FULL NAME: Only visible during signup mode */}
-            {isRegisterMode && (
-              <div className="animate-fadeIn">
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Full Name</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="Alex Johnson" 
-                  className="w-full bg-slate-950/80 border border-slate-700 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#008b9c] focus:border-transparent transition-all"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* EMAIL */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Email Address</label>
-              <input 
-                type="email" 
-                required 
-                placeholder="name@example.com" 
-                className="w-full bg-slate-950/80 border border-slate-700 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#008b9c] focus:border-transparent transition-all"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+          {/* Inline Logout Status Message */}
+          {logoutStatus && (
+            <div className="bg-emerald-500/10 border border-emerald-500/25 text-[#00c5d2] p-3 rounded-xl text-xs font-semibold tracking-wide text-center">
+              ℹ️ {logoutStatus}
             </div>
+          )}
 
-            {/* PASSWORD */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Password</label>
-              <input 
-                type="password" 
-                required 
-                placeholder="••••••••" 
-                className="w-full bg-slate-950/80 border border-slate-700 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#008b9c] focus:border-transparent transition-all"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+          {sessionLoading ? (
+            <div className="py-8 text-center text-xs text-slate-400 animate-pulse">
+              Verifying authentication state...
             </div>
-
-            {/* 🚨 MANDATORY SOCIAL MEDIA BLOCK (Register Mode Only) */}
-            {isRegisterMode && (
-              <div className="bg-slate-950/50 border border-slate-800 p-4 rounded-xl space-y-3 animate-fadeIn">
-                <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <span>🔒</span> Social Verification Checklist
-                </h4>
-                <p className="text-[10px] text-slate-400 leading-normal">
-                  You must visit and follow us on all 4 platforms to unlock your registration.
+          ) : userSession ? (
+            /* 🟢 ACTIVE SESSION UI: Show Dashboard Quick Link and Explicit Logout */
+            <div className="space-y-4 text-left animate-fadeIn">
+              <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Securely Connected
+                </span>
+                <p className="text-sm font-semibold text-white truncate">
+                  {userSession.user.email}
                 </p>
+                <p className="text-xs text-slate-400 leading-normal pt-1">
+                  You are already logged into the system. You can bypass authentication directly into your workspace.
+                </p>
+              </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <a 
-                    href="https://www.instagram.com/upstairsofficial?igsh=MWxiZncxdG16enh1aQ==" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    onClick={() => setHasVisitedInstagram(true)}
-                    className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                      hasVisitedInstagram 
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                        : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
-                    }`}
+              <div className="space-y-3">
+                {userRole && (
+                  <Link
+                    href={getRoleRedirectPath(userRole)}
+                    className="w-full flex items-center justify-center gap-2 bg-[#008b9c] hover:bg-[#007a8a] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-lg transition-all shadow-md"
                   >
-                    {hasVisitedInstagram ? '✓ Instagram' : '📸 Instagram'}
-                  </a>
+                    Go To My Workspace Dashboard ➔
+                  </Link>
+                )}
 
-                  <a 
-                    href="https://www.linkedin.com/in/upstairs-upstairs-164a77420?utm_source=share_via&utm_content=profile&utm_medium=member_android" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    onClick={() => setHasVisitedLinkedIn(true)}
-                    className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                      hasVisitedLinkedIn 
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                        : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    {hasVisitedLinkedIn ? '✓ LinkedIn' : '💼 LinkedIn'}
-                  </a>
+                {/* 🔴 BIG PRIMARY LOGOUT BUTTON */}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={authLoading}
+                  className="w-full bg-rose-950/30 hover:bg-rose-900/40 border border-rose-500/30 text-rose-300 font-bold text-xs uppercase tracking-wider py-3.5 rounded-lg transition-all flex items-center justify-center gap-2"
+                >
+                  {authLoading ? "Signing Out..." : "↪ Log Out / Switch Account"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* 🔵 LOGGED OUT FORM */
+            <div className="space-y-4">
+              <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
+                
+                {/* 👥 ROLE SELECTOR */}
+                {isRegisterMode && (
+                  <div className="animate-fadeIn">
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">My Profile Type</label>
+                    <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-700/80">
+                      <button
+                        type="button"
+                        onClick={() => setRole('talent')}
+                        className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                          role === 'talent'
+                            ? 'bg-[#008b9c] text-white shadow'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        🚀 Tech Talent
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRole('employer')}
+                        className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                          role === 'employer'
+                            ? 'bg-[#008b9c] text-white shadow'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        🏢 Employer
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                  <a 
-                    href="https://x.com/UpStairsOfficia" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    onClick={() => setHasVisitedX(true)}
-                    className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                      hasVisitedX 
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                        : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    {hasVisitedX ? '✓ X Profile' : '🐦 Follow X'}
-                  </a>
+                {/* FULL NAME */}
+                {isRegisterMode && (
+                  <div className="animate-fadeIn">
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Full Name</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Alex Johnson" 
+                      className="w-full bg-slate-950/80 border border-slate-700 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#008b9c] focus:border-transparent transition-all"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
+                  </div>
+                )}
 
-                  <a 
-                    href="https://www.facebook.com/share/18yeFwJzMF/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    onClick={() => setHasVisitedFacebook(true)}
-                    className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
-                      hasVisitedFacebook 
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                        : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    {hasVisitedFacebook ? '✓ Facebook' : '👥 Facebook'}
-                  </a>
+                {/* EMAIL */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Email Address</label>
+                  <input 
+                    type="email" 
+                    required 
+                    placeholder="name@example.com" 
+                    className="w-full bg-slate-950/80 border border-slate-700 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#008b9c] focus:border-transparent transition-all"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
 
-                <label className="flex items-start gap-2 pt-2.5 border-t border-slate-800/80 cursor-pointer">
+                {/* PASSWORD */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Password</label>
                   <input 
-                    type="checkbox" 
-                    checked={socialConfirmChecked}
-                    onChange={(e) => setSocialConfirmChecked(e.target.checked)}
-                    className="mt-0.5 rounded text-[#008b9c] focus:ring-[#008b9c] bg-slate-900 border-slate-700"
+                    type="password" 
+                    required 
+                    placeholder="••••••••" 
+                    className="w-full bg-slate-950/80 border border-slate-700 rounded-lg p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#008b9c] focus:border-transparent transition-all"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
-                  <span className="text-[10px] text-slate-400 leading-tight">
-                    I confirm I have followed all 4 platforms. Unfollowing later voids my onboarding entry.
-                  </span>
-                </label>
-              </div>
-            )}
+                </div>
 
-            <button 
-              type="submit" 
-              disabled={authLoading || (isRegisterMode && !isRegisterFormValid)}
-              className={`w-full text-white font-bold text-sm uppercase tracking-wider py-3.5 rounded-lg transition-all duration-200 shadow-md ${
-                !isRegisterMode || isRegisterFormValid
-                  ? 'bg-[#008b9c] hover:bg-[#007a8a] cursor-pointer'
-                  : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
-              }`}
-            >
-              {authLoading 
-                ? "Authorizing Profile..." 
-                : isRegisterMode 
-                  ? "Register Secure Account ➡️" 
-                  : "Secure Login ➡️"
-              }
-            </button>
-          </form>
+                {/* SOCIAL MEDIA VERIFICATION */}
+                {isRegisterMode && (
+                  <div className="bg-slate-950/50 border border-slate-800 p-4 rounded-xl space-y-3 animate-fadeIn">
+                    <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span>🔒</span> Social Verification Checklist
+                    </h4>
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                      You must visit and follow us on all 4 platforms to unlock your registration.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <a 
+                        href="https://www.instagram.com/upstairsofficial?igsh=MWxiZncxdG16enh1aQ==" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={() => setHasVisitedInstagram(true)}
+                        className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                          hasVisitedInstagram 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                            : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        {hasVisitedInstagram ? '✓ Instagram' : '📸 Instagram'}
+                      </a>
+
+                      <a 
+                        href="https://www.linkedin.com/in/upstairs-upstairs-164a77420?utm_source=share_via&utm_content=profile&utm_medium=member_android" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={() => setHasVisitedLinkedIn(true)}
+                        className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                          hasVisitedLinkedIn 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                            : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        {hasVisitedLinkedIn ? '✓ LinkedIn' : '💼 LinkedIn'}
+                      </a>
+
+                      <a 
+                        href="https://x.com/UpStairsOfficia" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={() => setHasVisitedX(true)}
+                        className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                          hasVisitedX 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                            : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        {hasVisitedX ? '✓ X Profile' : '🐦 Follow X'}
+                      </a>
+
+                      <a 
+                        href="https://www.facebook.com/share/18yeFwJzMF/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={() => setHasVisitedFacebook(true)}
+                        className={`py-2 px-2.5 rounded-lg text-[10px] font-bold text-center border transition-all flex items-center justify-center gap-1 ${
+                          hasVisitedFacebook 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                            : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        {hasVisitedFacebook ? '✓ Facebook' : '👥 Facebook'}
+                      </a>
+                    </div>
+
+                    <label className="flex items-start gap-2 pt-2.5 border-t border-slate-800/80 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={socialConfirmChecked}
+                        onChange={(e) => setSocialConfirmChecked(e.target.checked)}
+                        className="mt-0.5 rounded text-[#008b9c] focus:ring-[#008b9c] bg-slate-900 border-slate-700"
+                      />
+                      <span className="text-[10px] text-slate-400 leading-tight">
+                        I confirm I have followed all 4 platforms. Unfollowing later voids my onboarding entry.
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  disabled={authLoading || (isRegisterMode && !isRegisterFormValid)}
+                  className={`w-full text-white font-bold text-sm uppercase tracking-wider py-3.5 rounded-lg transition-all duration-200 shadow-md ${
+                    !isRegisterMode || isRegisterFormValid
+                      ? 'bg-[#008b9c] hover:bg-[#007a8a] cursor-pointer'
+                      : 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
+                  }`}
+                >
+                  {authLoading 
+                    ? "Authorizing Profile..." 
+                    : isRegisterMode 
+                      ? "Register Secure Account ➡️" 
+                      : "Secure Login ➡️"
+                  }
+                </button>
+              </form>
+
+              {/* 🔴 ALWAYS-VISIBLE SECURE OUT BUTTON (For cleanup) */}
+              <div className="pt-2 border-t border-slate-800/60">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={authLoading}
+                  className="w-full bg-slate-950/40 hover:bg-rose-950/15 border border-slate-800/80 hover:border-rose-900/40 text-slate-400 hover:text-rose-400 text-[10px] font-bold uppercase tracking-widest py-2 rounded-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  {authLoading ? "Signing out..." : "⚠️ Force Clear Session (Sign Out)"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Registration Primary CTA Elements inside the card */}
-          <div className="pt-4 border-t border-slate-800 space-y-3">
-            <p className="text-xs text-center font-medium text-slate-400">Need a pipeline account? Choose your path:</p>
-            <div className="grid grid-cols-2 gap-2.5">
-              
-              <Link 
-                href="/apply/talent"
-                className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
-              >
-                <span>🚀</span> Talent
-              </Link>
-              
-              <Link 
-                href="/apply/employer"
-                className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
-              >
-                <span>🏢</span> Employer
-              </Link>
+          {!userSession && (
+            <div className="pt-4 border-t border-slate-800 space-y-3">
+              <p className="text-xs text-center font-medium text-slate-400">Need a pipeline account? Choose your path:</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                
+                <Link 
+                  href="/apply/talent"
+                  className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
+                >
+                  <span>🚀</span> Talent
+                </Link>
+                
+                <Link 
+                  href="/apply/employer"
+                  className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors shadow-sm"
+                >
+                  <span>🏢</span> Employer
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
