@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation'; // 1. IMPORT THE NEXT ROUTER
 import Navbar from '@/components/layout/navbar'; 
 import { supabase } from '@/utils/supabase';
+import { getRoleRedirectPath, getUserRole } from '@/lib/auth';
 
 interface Task {
   id: number;
@@ -51,12 +52,18 @@ export default function WorkspacePage() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // Intercept and throw back to login gateway if token is absent
-        router.push('/apply');
-      } else {
-        setLoadingGuard(false);
-        fetchAttendanceLogs(); // Proceed with secure data streams sync
+        router.push('/apply?mode=login&message=Please sign in first to access your workspace.');
+        return;
       }
+
+      const role = await getUserRole(session.user.id);
+      if (role !== 'talent') {
+        router.push(`${role ? getRoleRedirectPath(role) : '/apply'}?message=You do not have access to the intern workspace.`);
+        return;
+      }
+
+      setLoadingGuard(false);
+      fetchAttendanceLogs();
     }
     enforceSecuritySession();
   }, [router]);

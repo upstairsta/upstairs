@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/navbar';
 import { supabase } from '@/utils/supabase';
+import { getRoleRedirectPath, getUserRole } from '@/lib/auth';
 
 export default function EmployerDashboard() {
   const router = useRouter();
@@ -31,7 +32,8 @@ export default function EmployerDashboard() {
         .single();
 
       if (profileError || !profile || profile.role !== 'employer') {
-        router.push('/apply?message=Unauthorized access.');
+        const role = profile?.role ?? await getUserRole(session.user.id);
+        router.push(`${role ? getRoleRedirectPath(role) : '/apply'}?message=You do not have access to the employer workspace.`);
         return;
       }
 

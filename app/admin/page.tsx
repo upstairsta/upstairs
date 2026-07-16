@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from './../../utils/supabase';
+import { supabase } from '@/utils/supabase';
+import { getUserRole, getRoleRedirectPath } from '@/lib/auth';
 
 interface TalentRow {
   id: string; 
@@ -30,13 +31,20 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function enforceAdminSession() {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session || !session.user.email?.includes('admin')) {
-        router.push('/apply');
-      } else {
-        setLoadingGuard(false);
-        fetchApplicants();
+
+      if (!session) {
+        router.push('/apply?mode=login&message=Please sign in with an admin account.');
+        return;
       }
+
+      const role = await getUserRole(session.user.id);
+      if (role !== 'admin') {
+        router.push(`${role ? getRoleRedirectPath(role) : '/apply'}?message=You do not have admin access.`);
+        return;
+      }
+
+      setLoadingGuard(false);
+      fetchApplicants();
     }
     enforceAdminSession();
   }, [router]);

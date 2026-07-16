@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/navbar';
 import { supabase } from '@/utils/supabase';
+import { getRoleRedirectPath, getUserRole } from '@/lib/auth';
 
 export default function TalentRegistrationPage() {
   const router = useRouter();
@@ -28,27 +29,39 @@ export default function TalentRegistrationPage() {
     let mounted = true;
 
     // 1. Check current session state immediately
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (mounted) {
         if (!session) {
-          // No active session? Instantly redirect to the registration portal
-          router.replace('/apply?role=talent');
-        } else {
-          setSession(session);
-          setAuthLoading(false);
+          router.replace('/apply?role=talent&mode=signup');
+          return;
         }
+
+        const role = await getUserRole(session.user.id);
+        if (role !== 'talent') {
+          router.replace(`${role ? getRoleRedirectPath(role) : '/apply'}?message=You do not have access to the talent application.`);
+          return;
+        }
+
+        setSession(session);
+        setAuthLoading(false);
       }
     });
 
-    // 2. Listen to real-time auth changes (e.g., if they sign out)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (mounted) {
         if (!session) {
-          router.replace('/apply?role=talent');
-        } else {
-          setSession(session);
-          setAuthLoading(false);
+          router.replace('/apply?role=talent&mode=signup');
+          return;
         }
+
+        const role = await getUserRole(session.user.id);
+        if (role !== 'talent') {
+          router.replace(`${role ? getRoleRedirectPath(role) : '/apply'}?message=You do not have access to the talent application.`);
+          return;
+        }
+
+        setSession(session);
+        setAuthLoading(false);
       }
     });
 
@@ -131,7 +144,16 @@ export default function TalentRegistrationPage() {
     setIsSubmitting(true);
 
     try {
-      // Ensure user metadata explicitly holds 'talent' role
+      // Ensure profile is set to talent role
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ role: 'talent' })
+        .eq('id', session.user.id);
+
+      if (profileError) {
+        throw new Error(`Failed to update talent profile role: ${profileError.message}`);
+      }
+
       if (session.user.user_metadata?.role !== 'talent') {
         const { error: updateError } = await supabase.auth.updateUser({
           data: { role: 'talent' }

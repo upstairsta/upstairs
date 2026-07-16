@@ -15,6 +15,31 @@ export function getRoleRedirectPath(role: string): string {
   }
 }
 
+export function getRequiredRole(pathname: string): UserRole | null {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (
+    pathname.startsWith('/workspace/employer-dashboard') ||
+    pathname.startsWith('/apply/employer') ||
+    pathname === '/register'
+  ) {
+    return 'employer';
+  }
+  if (
+    pathname.startsWith('/workspace/talent-dashboard') ||
+    pathname.startsWith('/apply/talent') ||
+    pathname === '/workspace'
+  ) {
+    return 'talent';
+  }
+  return null;
+}
+
+export function canAccessRoute(role: string, pathname: string): boolean {
+  const required = getRequiredRole(pathname);
+  if (!required) return true;
+  return role === required;
+}
+
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
@@ -38,6 +63,11 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
 
   if (error || !profile) return null;
   return profile.role as UserRole;
+}
+
+export async function isAdmin(userId: string): Promise<boolean> {
+  const role = await getUserRole(userId);
+  return role === 'admin';
 }
 
 export async function signInAndGetRedirect(email: string, password: string): Promise<string> {

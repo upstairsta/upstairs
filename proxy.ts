@@ -1,5 +1,19 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getRequiredRole, getRoleRedirectPath } from '@/lib/auth';
+
+async function getProfileRole(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string
+): Promise<string | null> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  return profile?.role ?? null;
+}
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
@@ -38,10 +52,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isGuardedRoute =
-    pathname.startsWith('/workspace') ||
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/apply/talent');
+  const requiredRole = getRequiredRole(pathname);
 
   const isAuthRoute =
     pathname === '/login' ||
@@ -49,7 +60,7 @@ export async function proxy(request: NextRequest) {
     pathname === '/register' ||
     (pathname === '/apply' && request.nextUrl.searchParams.get('mode') !== null);
 
-  if (!user && isGuardedRoute) {
+  if (!user && requiredRole) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/apply';
     redirectUrl.searchParams.set('mode', 'login');
@@ -57,9 +68,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  if (user && requiredRole) {
+    const role = await getProfileRole(supabase, user.id);
+    if (!role || role !== requiredRole) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = role ? getRoleRedirectPath(role) : '/apply';
+      redirectUrl.searchParams.set('message', 'You do not have access to that area.');
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
   if (user && isAuthRoute) {
+    const role = await getProfileRole(supabase, user.id);
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/apply';
+    redirectUrl.pathname = role ? getRoleRedirectPath(role) : '/apply';
+    redirectUrl.search = '';
     return NextResponse.redirect(redirectUrl);
   }
 

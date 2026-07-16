@@ -47,7 +47,7 @@ function ApplyForm() {
         
         if (session) {
           setUserSession(session);
-          // Retrieve user's role profile dynamically
+          setErrorMessage(null);
           const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -55,6 +55,10 @@ function ApplyForm() {
             .single();
           if (profile) {
             setUserRole(profile.role);
+          }
+
+          if (searchParams.get('message') || searchParams.get('mode')) {
+            router.replace('/apply');
           }
         } else {
           setUserSession(null);
@@ -87,7 +91,7 @@ function ApplyForm() {
     if (message) {
       setErrorMessage(message);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   // 🔴 Force Sign Out Action
   const handleLogout = async () => {
@@ -99,6 +103,7 @@ function ApplyForm() {
       setUserSession(null);
       setUserRole(null);
       setLogoutStatus("Your active session was safely terminated.");
+      router.refresh();
     } catch (err: any) {
       setErrorMessage(err.message || "Signout execution failed.");
     } finally {
@@ -145,6 +150,7 @@ function ApplyForm() {
         if (error) throw error;
 
         alert("Registration successful! Proceeding to your secure workspace.");
+        router.refresh();
         router.push(getRoleRedirectPath(role));
 
       } else {
@@ -167,6 +173,7 @@ function ApplyForm() {
             throw new Error("Unable to retrieve your designated portal role.");
           }
 
+          router.refresh();
           router.push(getRoleRedirectPath(profile.role));
         }
       }
@@ -268,19 +275,39 @@ function ApplyForm() {
                   {userSession.user.email}
                 </p>
                 <p className="text-xs text-slate-400 leading-normal pt-1">
-                  You are already logged into the system. You can bypass authentication directly into your workspace.
+                  Signed in as <span className="text-white font-medium capitalize">{userRole}</span>.
+                  {userRole === 'talent' && ' Access your talent workspace and application below.'}
+                  {userRole === 'employer' && ' Access your employer portal below.'}
+                  {userRole === 'admin' && ' Access the admin dashboard below.'}
                 </p>
               </div>
 
               <div className="space-y-3">
                 {userRole && (
-                  <Link
-                    href={getRoleRedirectPath(userRole)}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.refresh();
+                      router.push(getRoleRedirectPath(userRole));
+                    }}
                     className="w-full flex items-center justify-center gap-2 bg-[#008b9c] hover:bg-[#007a8a] text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-lg transition-all shadow-md"
                   >
-                    Go To My Workspace Dashboard ➔
+                    Go To My {userRole === 'admin' ? 'Admin Dashboard' : 'Workspace'} ➔
+                  </button>
+                )}
+
+                {userRole === 'talent' && (
+                  <Link
+                    href="/apply/talent"
+                    className="w-full flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold tracking-wider uppercase py-3 px-2 rounded-md border border-slate-700 transition-colors"
+                  >
+                    <span>🚀</span> Complete Talent Application
                   </Link>
                 )}
+
+                <p className="text-[10px] text-slate-500 text-center pt-1">
+                  Need a different account type? Sign out below first.
+                </p>
 
                 {/* 🔴 BIG PRIMARY LOGOUT BUTTON */}
                 <button

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link'; // Imported Link for dashboard routing
-import Navbar from '@/components/layout/navbar'; // Adjust path if needed
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/components/layout/navbar';
+import { supabase } from '@/utils/supabase';
+import { getUserRole, getRoleRedirectPath } from '@/lib/auth';
 
 // --- INITIAL DUMMY COHORT DATA ---
 const INITIAL_CANDIDATES = [
@@ -15,8 +18,35 @@ const INITIAL_CANDIDATES = [
 ];
 
 export default function PlacementEnginePage() {
+  const router = useRouter();
+  const [authLoading, setAuthLoading] = useState(true);
   const [candidates, setCandidates] = useState(INITIAL_CANDIDATES);
   const [activeFilter, setActiveFilter] = useState('All');
+
+  useEffect(() => {
+    async function enforceAdminSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/apply?mode=login&message=Please sign in with an admin account.');
+        return;
+      }
+      const role = await getUserRole(session.user.id);
+      if (role !== 'admin') {
+        router.push(`${role ? getRoleRedirectPath(role) : '/apply'}?message=You do not have admin access.`);
+        return;
+      }
+      setAuthLoading(false);
+    }
+    enforceAdminSession();
+  }, [router]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-dvh bg-slate-950 flex items-center justify-center text-slate-400 text-sm">
+        Verifying admin access...
+      </div>
+    );
+  }
 
   // Triggering the Decision Logic Engine
   const assignOutcome = (id: number, decision: 'Employer Placement' | 'Startup Absorption' | 'Internship Extension' | 'Reapplication') => {

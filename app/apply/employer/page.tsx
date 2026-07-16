@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Navbar from '@/components/layout/navbar'; // Absolute alias to prevent route breakdown
-import { supabase } from '@/utils/supabase';     // Standard absolute path
+import { supabase } from '@/utils/supabase';
+import { getRoleRedirectPath, getUserRole } from '@/lib/auth';
 
 export default function EmployerRegistrationPage() {
   const router = useRouter();
@@ -15,12 +16,22 @@ export default function EmployerRegistrationPage() {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Safe landing pad: Authenticated employers go straight to dashboard workspace
-        router.push('/workspace/employer-dashboard'); 
-      } else {
+      if (!session) {
         setIsCheckingAuth(false);
+        return;
       }
+
+      const role = await getUserRole(session.user.id);
+      if (role === 'employer') {
+        router.push('/workspace/employer-dashboard');
+        return;
+      }
+      if (role) {
+        router.push(`${getRoleRedirectPath(role)}?message=You do not have access to employer registration.`);
+        return;
+      }
+
+      setIsCheckingAuth(false);
     };
     checkSession();
   }, [router]);

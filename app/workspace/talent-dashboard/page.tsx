@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/navbar';
 import { supabase } from '@/utils/supabase';
+import { getRoleRedirectPath, getUserRole } from '@/lib/auth';
 
 export default function TalentDashboard() {
   const router = useRouter();
@@ -27,7 +28,8 @@ export default function TalentDashboard() {
         .single();
 
       if (profileError || !profile || profile.role !== 'talent') {
-        router.push('/apply?message=Unauthorized access.');
+        const role = profile?.role ?? await getUserRole(session.user.id);
+        router.push(`${role ? getRoleRedirectPath(role) : '/apply'}?message=You do not have access to the talent workspace.`);
         return;
       }
 
