@@ -29,20 +29,11 @@ export default function Footer() {
             <li><Link href="/upstairs-startups" className="hover:text-brand-teal transition-colors duration-300">Upstairs Talent Pipeline Startups</Link></li>
             <li><Link href="/success-stories" className="hover:text-brand-teal transition-colors duration-300">Success Stories</Link></li>
             <li><Link href="/faq" className="hover:text-brand-teal transition-colors duration-300">FAQ</Link></li>
-            <li><Link href="/jobs" className="hover:text-brand-teal transition-colors duration-300">Jobs</Link></li>
-            <li><Link href="/learning" className="hover:text-brand-teal transition-colors duration-300">Learning</Link></li>
           </ul>
         </div>
 
         <div>
-          <h3 className="font-bold text-lg mb-5 text-white">Apply</h3>
-          <ul className="space-y-3 text-sm text-slate-400">
-            <li><Link href="/apply?mode=login" className="hover:text-brand-teal transition-colors duration-300">Sign In</Link></li>
-            <li><Link href="/apply?mode=signup" className="hover:text-brand-teal transition-colors duration-300">Sign Up</Link></li>
-            <li><Link href="/apply" className="hover:text-brand-teal transition-colors duration-300">Apply Portal</Link></li>
-          </ul>
-
-          <h3 className="font-bold text-lg mb-5 mt-8 text-white">Follow Us</h3>
+          <h3 className="font-bold text-lg mb-5 text-white">Follow Us</h3>
           <div className="flex space-x-4 text-sm text-slate-400">
             <a href="https://www.facebook.com/share/18yeFwJzMF/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-teal cursor-pointer transition-colors duration-300">Facebook</a>
             <span>/</span>

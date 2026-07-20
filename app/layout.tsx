@@ -37,6 +37,7 @@ export default function RootLayout({
         </div>
 
         {/* This renders your transparent footer cleanly at the very bottom of the app */}
+        <Footer />
                 
       </body>
     </html>
